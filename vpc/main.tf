@@ -27,6 +27,21 @@ resource "aws_internet_gateway" "this" {
   }
 }
 
+resource "aws_eip" "eip_ig_nat_main" {
+  for_each = toset(["eu-south-2a", "eu-south-2b", "eu-south-2c"])
+  tags = {
+    Name = "nat-eip-${each.key}"
+  }
+}
+
+resource "aws_nat_gateway" "ig_nat_main" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public["eu-south-2a"].id
+  tags = {
+    Name = "nat-gateway-${each.key}"
+  }
+}
+
 ##################################
 # Subnets Block
 ##################################
@@ -42,6 +57,28 @@ resource "aws_subnet" "public" {
     Name = "igw-main"
     Product = var.Product
     Environment = var.Environment
+  }
+}
+
+resource "aws_subnet" "subnet_privatenat" {
+  for_each                          = toset(local.azs)
+  vpc_id                            = aws_vpc.vpc_main.id
+  cidr_block                        = cidrsubnet(var.ENV_AWS_VPC.PrivateNat, 2, index(local.azs, each.key))
+  availability_zone                 = each.key
+  assign_ipv6_address_on_creation   = true
+  ipv6_cidr_block                   = cidrsubnet(aws_vpc.vpc_main.ipv6_cidr_block, 8, index(local.azs, each.key))
+  tags = {
+    Name = "private-with-nat-${each.key}"
+  }
+}
+
+resource "aws_subnet" "subnet_private" {
+  for_each          = toset(local.azs)
+  vpc_id            = aws_vpc.vpc_main.id
+  cidr_block        = cidrsubnet(var.ENV_AWS_VPC.Private, 2, index(local.azs, each.key))
+  availability_zone = each.key
+  tags = {
+    Name = "private-no-nat-${each.key}"
   }
 }
 
@@ -66,6 +103,24 @@ resource "aws_route_table" "public" {
   }
 }
 
+resource "aws_route_table" "rt_privatenat" {
+  vpc_id = aws_vpc.vpc_main.id
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat.id
+  }
+  tags = {
+    Name = "private-with-nat-rt"
+  }
+}
+
+resource "aws_route_table" "rt_private" {
+  vpc_id = aws_vpc.vpc_main.id
+  tags = {
+    Name = "private-no-nat-rt"
+  }
+}
+
 #################################
 # Route Table Association Block
 #################################
@@ -74,4 +129,16 @@ resource "aws_route_table_association" "public" {
   for_each       = aws_subnet.public
   subnet_id      = each.value.id
   route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "rtassoc_privatenat" {
+  for_each       = aws_subnet.subnet_privatenat
+  subnet_id      = each.value.id
+  route_table_id = aws_route_table.rt_privatenat.id
+}
+
+resource "aws_route_table_association" "rtassoc_private" {
+  for_each       = aws_subnet.subnet_private
+  subnet_id      = each.value.id
+  route_table_id = aws_route_table.rt_private.id
 }
