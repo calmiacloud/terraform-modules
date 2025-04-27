@@ -15,7 +15,7 @@ resource "aws_vpc" "this" {
 }
 
 ##############################
-# Internet Gateway
+# Internet Gateways
 ##############################
 
 resource "aws_internet_gateway" "this" {
@@ -28,9 +28,11 @@ resource "aws_internet_gateway" "this" {
 }
 
 resource "aws_eip" "eip_ig_nat_main" {
-  for_each = toset(["eu-south-2a", "eu-south-2b", "eu-south-2c"])
+  for_each = toset(data.aws_availability_zones.available.names)
   tags = {
-    Name = "nat-eip-${each.key}"
+    Name = "eip-nat-${each.key}"
+    Product = var.Product
+    Environment = var.Environment
   }
 }
 
@@ -39,6 +41,8 @@ resource "aws_nat_gateway" "ig_nat_main" {
   subnet_id     = aws_subnet.public["eu-south-2a"].id
   tags = {
     Name = "nat-gateway-${each.key}"
+    Product = var.Product
+    Environment = var.Environment
   }
 }
 
@@ -47,7 +51,7 @@ resource "aws_nat_gateway" "ig_nat_main" {
 ##################################
 
 resource "aws_subnet" "public" {
-  for_each = toset(data.aws_availability_zones.available.names)
+  for_each                        = toset(data.aws_availability_zones.available.names)
   vpc_id                          = aws_vpc.this.id
   cidr_block                      = cidrsubnet(var.vpc_cidr, 2, index(data.aws_availability_zones.available.names, each.key))
   availability_zone               = each.key
