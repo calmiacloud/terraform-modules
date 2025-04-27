@@ -1,39 +1,27 @@
-variable "name" {
-  description = "Nombre del Security Group"
+variable "vpc_cidr" {
+  description = "CIDR de la VPC principal"
   type        = string
 }
 
-variable "vpc_id" {
-  description = "ID de la VPC donde se creará el SG"
+variable "enable_dns_hostnames" {
+  description = "Habilitar DNS hostnames en la VPC"
+  type        = bool
+  default     = false
+}
+
+variable "enable_dns_support" {
+  description = "Habilitar soporte de DNS en la VPC"
+  type        = bool
+  default     = false
+}
+
+variable "name_prefix" {
+  description = "Prefijo de nombre para recursos"
   type        = string
 }
 
-variable "rule_tags" {
-  description = "Etiquetas comunes para las reglas de seguridad"
+variable "tags" {
+  description = "Etiquetas comunes"
   type        = map(string)
   default     = {}
-}
-
-variable "ingress_rules" {
-  description = "Reglas de entrada"
-  type = list(object({
-    name        = string
-    from_port   = number
-    to_port     = number
-    protocol    = string
-    cidr_ipv4   = string
-  }))
-  default = []
-}
-
-variable "egress_rules" {
-  description = "Reglas de salida"
-  type = list(object({
-    name        = string
-    from_port   = number
-    to_port     = number
-    protocol    = string
-    cidr_ipv4   = string
-  }))
-  default = []
 }
