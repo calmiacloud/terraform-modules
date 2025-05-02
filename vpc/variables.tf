@@ -1,17 +1,39 @@
-variable "name" {
+variable "Name" {
   type        = string
 }
 
-variable "vpc_cidr" {
+variable "Product" {
   type        = string
 }
 
-variable "dns_support" {
-  type        = bool
-  default     = false
+variable "Environment" {
+  type        = string
 }
 
-variable "ipv6_support" {
-  type        = bool
-  default     = false
+variable "Vpc" {
+  description = "Configuración de la VPC"
+  type = object({
+    VpcCidr    = string
+    DnsSupport = bool
+    Ipv6Support = bool
+  })
+}
+
+variable "Subnets" {
+  type = object({
+    Public  = optional(list(object({
+      Name     = string
+      Cidr     = string
+      Internet = bool
+    })), [])
+    Private = optional(list(object({
+      Name = string
+      Cidr = string
+      Nat  = bool
+    })), [])
+  })
+  default = {
+    Public  = []
+    Private = []
+  }
 }

@@ -3,13 +3,13 @@
 ##############################
 
 resource "aws_vpc" "this" {
-  cidr_block           = var.vpc_cidr
-  enable_dns_hostnames = var.dns_support
-  enable_dns_support   = var.dns_support
-  assign_generated_ipv6_cidr_block = var.ipv6_support
+  cidr_block                     = var.Vpc.VpcCidr
+  enable_dns_support             = var.Vpc.DnsSupport
+  enable_dns_hostnames           = var.Vpc.DnsSupport
+  assign_generated_ipv6_cidr_block = var.Vpc.Ipv6Support
   tags = {
-    Name = "vpc-main"
-    Product = var.Product
+    Name        = "vpc-${var.name}"
+    Product     = var.Product
     Environment = var.Environment
   }
 }
@@ -19,10 +19,11 @@ resource "aws_vpc" "this" {
 ##############################
 
 resource "aws_internet_gateway" "this" {
+  count = length(var.Subnets.Public) > 0 ? 1 : 0
   vpc_id = aws_vpc.this.id
   tags = {
-    Name = "igw-main"
-    Product = var.Product
+    Name        = "igw-${var.name}"
+    Product     = var.Product
     Environment = var.Environment
   }
 }
@@ -51,38 +52,28 @@ resource "aws_nat_gateway" "ig_nat_main" {
 ##################################
 
 resource "aws_subnet" "public" {
-  for_each                        = toset(data.aws_availability_zones.available.names)
-  vpc_id                          = aws_vpc.this.id
-  cidr_block                      = cidrsubnet(var.vpc_cidr, 2, index(data.aws_availability_zones.available.names, each.key))
-  availability_zone               = each.key
-  map_public_ip_on_launch         = true
-  assign_ipv6_address_on_creation = var.ipv6_support
+  count = length(var.Subnets.Public)
+  vpc_id                  = aws_vpc.this.id
+  cidr_block              = var.Subnets.Public[count.index].Cidr
+  availability_zone       = element(data.aws_availability_zones.available.names, count.index)
+  map_public_ip_on_launch = var.Subnets.Public[count.index].Internet
+  assign_ipv6_address_on_creation = var.Vpc.Ipv6Support
   tags = {
-    Name = "igw-main"
-    Product = var.Product
+    Name        = "public-${var.Subnets.Public[count.index].Name}"
+    Product     = var.Product
     Environment = var.Environment
   }
 }
 
-resource "aws_subnet" "subnet_privatenat" {
-  for_each                          = toset(local.azs)
-  vpc_id                            = aws_vpc.vpc_main.id
-  cidr_block                        = cidrsubnet(var.ENV_AWS_VPC.PrivateNat, 2, index(local.azs, each.key))
-  availability_zone                 = each.key
-  assign_ipv6_address_on_creation   = true
-  ipv6_cidr_block                   = cidrsubnet(aws_vpc.vpc_main.ipv6_cidr_block, 8, index(local.azs, each.key))
+resource "aws_subnet" "private" {
+  count = length(var.Subnets.Private)
+  vpc_id            = aws_vpc.this.id
+  cidr_block        = var.Subnets.Private[count.index].Cidr
+  availability_zone = element(data.aws_availability_zones.available.names, count.index)
   tags = {
-    Name = "private-with-nat-${each.key}"
-  }
-}
-
-resource "aws_subnet" "subnet_private" {
-  for_each          = toset(local.azs)
-  vpc_id            = aws_vpc.vpc_main.id
-  cidr_block        = cidrsubnet(var.ENV_AWS_VPC.Private, 2, index(local.azs, each.key))
-  availability_zone = each.key
-  tags = {
-    Name = "private-no-nat-${each.key}"
+    Name        = "private-${var.Subnets.Private[count.index].Name}"
+    Product     = var.Product
+    Environment = var.Environment
   }
 }
 
