@@ -21,19 +21,22 @@ variable "Vpc" {
 
 variable "Subnets" {
   type = object({
-    Public  = optional(list(object({
-      Name     = string
-      Cidr     = string
-      Internet = bool
+    Public = optional(list(object({
+      Name = string
+      Cidr = string
+    })), [])
+    Nat = optional(list(object({
+      Name = string
+      Cidr = string
     })), [])
     Private = optional(list(object({
       Name = string
       Cidr = string
-      Nat  = bool
     })), [])
   })
   default = {
     Public  = []
+    Nat     = []
     Private = []
   }
 }
