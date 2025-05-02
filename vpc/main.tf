@@ -78,7 +78,7 @@ resource "aws_subnet" "private" {
   cidr_block        = each.value.Cidr
   availability_zone = element(data.aws_availability_zones.available.names, index(keys(aws_subnet.private), each.key))
   tags = {
-    Name        = "${each.value.type}-${each.value.Name}"
+    Name        = "subnet-${each.value.type}-${each.value.Name}"
     Product     = var.Product
     Environment = var.Environment
   }
