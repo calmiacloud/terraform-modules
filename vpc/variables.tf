@@ -1,4 +1,4 @@
-variable "Name" {
+variable "name" {
   type        = string
 }
 
@@ -11,10 +11,9 @@ variable "Environment" {
 }
 
 variable "Vpc" {
-  description = "Configuración de la VPC"
   type = object({
-    VpcCidr    = string
-    DnsSupport = bool
+    Cidr        = string
+    DnsSupport  = bool
     Ipv6Support = bool
   })
 }
@@ -22,8 +21,8 @@ variable "Vpc" {
 variable "Subnets" {
   type = object({
     Public = optional(list(object({
-      Name = string
-      Cidr = string
+      Name     = string
+      Cidr     = string
     })), [])
     Nat = optional(list(object({
       Name = string
