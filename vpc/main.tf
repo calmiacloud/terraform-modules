@@ -69,11 +69,11 @@ resource "aws_subnet" "public" {
 
 resource "aws_subnet" "private" {
   for_each = {
-    for subnet in var.Subnets.Nat : "nat-${subnet.Name}" => merge(subnet, { type = "nat" })
-    ...
-    for subnet in var.Subnets.Private : "private-${subnet.Name}" => merge(subnet, { type = "private" })
+    for subnet in concat(
+      [for s in var.Subnets.Nat : merge(s, { type = "nat", key = "nat-${s.Name}" })],
+      [for s in var.Subnets.Private : merge(s, { type = "private", key = "private-${s.Name}" })]
+    ) : subnet.key => subnet
   }
-
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = each.value.Cidr
   availability_zone = element(data.aws_availability_zones.available.names, index(keys(aws_subnet.private), each.key))
@@ -83,6 +83,7 @@ resource "aws_subnet" "private" {
     Environment = var.Environment
   }
 }
+
 
 #################################
 # Route Table Block
