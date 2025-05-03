@@ -3,7 +3,7 @@
 ##############################
 
 resource "aws_vpc" "vpc" {
-  cidr_block                     = var.Vpc.VpcCidr
+  cidr_block                     = var.Vpc.Cidr
   enable_dns_support             = var.Vpc.DnsSupport
   enable_dns_hostnames           = var.Vpc.DnsSupport
   assign_generated_ipv6_cidr_block = var.Vpc.Ipv6Support
@@ -15,11 +15,11 @@ resource "aws_vpc" "vpc" {
 }
 
 ##############################
-# Internet Gateways
+# Internet Gateway
 ##############################
 
 resource "aws_internet_gateway" "ig_internet" {
-  count = length(var.Subnets.Public) > 0 ? 1 : 0
+  count  = length(var.Subnets.Public) > 0 ? 1 : 0
   vpc_id = aws_vpc.vpc.id
   tags = {
     Name        = "igw-${var.name}"
@@ -40,8 +40,8 @@ resource "aws_eip" "eip_ig_nat" {
 
 resource "aws_nat_gateway" "ig_nat" {
   count         = length(var.Subnets.Nat) > 0 ? 1 : 0
-  allocation_id = aws_eip.eip_ig_nat_main[0].id
-  subnet_id     = aws_subnet.nat[data.aws_availability_zones.available.names[0]].id
+  allocation_id = aws_eip.eip_ig_nat[0].id
+  subnet_id     = aws_subnet.public[0].id
   tags = {
     Name        = "nat-gateway-${var.name}"
     Product     = var.Product
@@ -50,7 +50,7 @@ resource "aws_nat_gateway" "ig_nat" {
 }
 
 ##################################
-# Subnets Block
+# Public Subnets
 ##################################
 
 resource "aws_subnet" "public" {
@@ -66,6 +66,10 @@ resource "aws_subnet" "public" {
     Environment = var.Environment
   }
 }
+
+##################################
+# Private and NAT Subnets
+##################################
 
 resource "aws_subnet" "private" {
   for_each = {
@@ -83,12 +87,3 @@ resource "aws_subnet" "private" {
     Environment = var.Environment
   }
 }
-
-
-#################################
-# Route Table Block
-#################################
-
-#################################
-# Route Table Association Block
-#################################
