@@ -61,7 +61,7 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch           = true
   assign_ipv6_address_on_creation   = var.Vpc.Ipv6Support
   tags = {
-    Name        = "subnet-public-${var.Subnets.Public[count.index].Name}"
+    Name        = "SubnetPublic${var.Subnets.Public[count.index].Name}"
     Product     = var.Product
     Environment = var.Environment
   }
@@ -74,15 +74,15 @@ resource "aws_subnet" "public" {
 resource "aws_subnet" "private" {
   for_each = {
     for subnet in concat(
-      [for s in var.Subnets.Nat : merge(s, { type = "nat", key = "nat-${s.Name}" })],
-      [for s in var.Subnets.Private : merge(s, { type = "private", key = "private-${s.Name}" })]
+      [for s in var.Subnets.Nat : merge(s, { type = "nat", key = "Nat${s.Name}" })],
+      [for s in var.Subnets.Private : merge(s, { type = "private", key = "Private${s.Name}" })]
     ) : subnet.key => subnet
   }
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = each.value.Cidr
   availability_zone = element(data.aws_availability_zones.available.names, index(keys(aws_subnet.private), each.key))
   tags = {
-    Name        = "subnet-${each.value.type}-${each.value.Name}"
+    Name        = "Subnet${each.value.type}-${each.value.Name}"
     Product     = var.Product
     Environment = var.Environment
   }
