@@ -8,7 +8,7 @@ resource "aws_vpc" "vpc" {
   enable_dns_hostnames           = var.Vpc.DnsSupport
   assign_generated_ipv6_cidr_block = var.Vpc.Ipv6Support
   tags = {
-    Name        = "vpc-${var.name}"
+    Name        = "vpc-${var.Name}"
     Product     = var.Product
     Environment = var.Environment
   }
@@ -22,7 +22,7 @@ resource "aws_internet_gateway" "ig_internet" {
   count  = length(var.Subnets.Public) > 0 ? 1 : 0
   vpc_id = aws_vpc.vpc.id
   tags = {
-    Name        = "igw-${var.name}"
+    Name        = "igw-${var.Name}"
     Product     = var.Product
     Environment = var.Environment
   }
@@ -32,7 +32,7 @@ resource "aws_eip" "eip_ig_nat" {
   count  = length(var.Subnets.Nat) > 0 ? 1 : 0
   domain = "vpc"
   tags = {
-    Name        = "eip-nat-${var.name}"
+    Name        = "eip-nat-${var.Name}"
     Product     = var.Product
     Environment = var.Environment
   }
@@ -43,7 +43,7 @@ resource "aws_nat_gateway" "ig_nat" {
   allocation_id = aws_eip.eip_ig_nat[0].id
   subnet_id     = aws_subnet.public[0].id
   tags = {
-    Name        = "nat-gateway-${var.name}"
+    Name        = "nat-gateway-${var.Name}"
     Product     = var.Product
     Environment = var.Environment
   }
