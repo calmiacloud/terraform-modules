@@ -8,7 +8,7 @@ resource "aws_vpc" "vpc" {
   enable_dns_hostnames           = var.Vpc.DnsSupport
   assign_generated_ipv6_cidr_block = var.Vpc.Ipv6Support
   tags = {
-    Name        = "Vpc-${var.Name}"
+    Name        = "Vpc${var.Name}"
     Product     = var.Product
     Environment = var.Environment
   }
@@ -22,7 +22,7 @@ resource "aws_internet_gateway" "ig_internet" {
   count  = length(var.Subnets.Public) > 0 ? 1 : 0
   vpc_id = aws_vpc.vpc.id
   tags = {
-    Name        = "GwI-${var.Name}"
+    Name        = "GwI${var.Name}"
     Product     = var.Product
     Environment = var.Environment
   }
@@ -32,7 +32,7 @@ resource "aws_eip" "eip_ig_nat" {
   count  = length(var.Subnets.Nat) > 0 ? 1 : 0
   domain = "vpc"
   tags = {
-    Name        = "Eip-GwNat-${var.Name}"
+    Name        = "EipGwNat${var.Name}"
     Product     = var.Product
     Environment = var.Environment
   }
@@ -43,7 +43,7 @@ resource "aws_nat_gateway" "ig_nat" {
   allocation_id = aws_eip.eip_ig_nat[0].id
   subnet_id     = aws_subnet.subnet_public[0].id
   tags = {
-    Name        = "GwNat-${var.Name}"
+    Name        = "GwNat${var.Name}"
     Product     = var.Product
     Environment = var.Environment
   }
@@ -75,10 +75,23 @@ resource "aws_subnet" "subnet_private" {
     ) : subnet.key => subnet
   }
   vpc_id            = aws_vpc.vpc.id
-  cidr_block        = each.value.Cidr
+  cidr_block        = var.Subnets.Private[count.index].Cidr
   availability_zone = element(data.aws_availability_zones.available.names, index(keys(aws_subnet.subnet_private), each.key))
   tags = {
-    Name        = "Subnet${each.value.type}-${each.value.Name}"
+    Name        = "SubnetPrivate${var.Subnets.Nat[count.index].Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
+}
+
+resource "aws_subnet" "subnet_nat" {
+  count                   = length(var.Subnets.Nat)
+  vpc_id                  = aws_vpc.vpc.id
+  cidr_block              = var.Subnets.Nat[count.index].Cidr
+  availability_zone       = element(data.aws_availability_zones.available.names, count.index)
+  map_public_ip_on_launch = false
+  tags = {
+    Name        = "SubnetNat${var.Subnets.Nat[count.index].Name}"
     Product     = var.Product
     Environment = var.Environment
   }
