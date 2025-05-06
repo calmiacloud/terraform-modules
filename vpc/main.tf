@@ -50,10 +50,10 @@ resource "aws_nat_gateway" "ig_nat" {
 }
 
 ##################################
-# Public Subnets
+# Subnets
 ##################################
 
-resource "aws_subnet" "public" {
+resource "aws_subnet" "subnet_public" {
   count                             = length(var.Subnets.Public)
   vpc_id                            = aws_vpc.vpc.id
   cidr_block                        = var.Subnets.Public[count.index].Cidr
@@ -67,11 +67,7 @@ resource "aws_subnet" "public" {
   }
 }
 
-##################################
-# Private and NAT Subnets
-##################################
-
-resource "aws_subnet" "private" {
+resource "aws_subnet" "subnet_private" {
   for_each = {
     for subnet in concat(
       [for s in var.Subnets.Nat : merge(s, { type = "nat", key = "Nat${s.Name}" })],
@@ -86,4 +82,102 @@ resource "aws_subnet" "private" {
     Product     = var.Product
     Environment = var.Environment
   }
+}
+
+#################################
+# Routes Block
+##################################
+
+resource "aws_route_table" "rt_public" {
+  count  = length(var.Subnets.Public) > 0 ? 1 : 0
+  vpc_id = aws_vpc.vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.ig_internet[0].id
+  }
+  dynamic "route" {
+    for_each = var.Vpc.Ipv6Support ? [1] : []
+    content {
+      ipv6_cidr_block = "::/0"
+      gateway_id      = aws_internet_gateway.ig_internet[0].id
+    }
+  }
+  dynamic "route" {
+    for_each = flatten([
+      for s in var.Subnets.Public : lookup(s, "AdditionalRoutes", [])
+    ])
+    content {
+      cidr_block                = lookup(route.value, "Cidr", null)
+      network_interface_id      = route.value.Type == "NetworkInterface"     ? route.value.Target : null
+    }
+  }
+  tags = {
+    Name        = "RtPublic${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
+}
+
+resource "aws_route_table" "rt_nat" {
+  count  = length(var.Subnets.Nat) > 0 ? 1 : 0
+  vpc_id = aws_vpc.vpc.id
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.ig_nat[0].id
+  }
+  dynamic "route" {
+    for_each = flatten([
+      for s in var.Subnets.Public : lookup(s, "AdditionalRoutes", [])
+    ])
+    content {
+      cidr_block                = lookup(route.value, "Cidr", null)
+      network_interface_id      = route.value.Type == "NetworkInterface"     ? route.value.Target : null
+    }
+  }
+  tags = {
+    Name        = "RtNat${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
+}
+
+resource "aws_route_table" "rt_private" {
+  count  = length(var.Subnets.Private) > 0 ? 1 : 0
+  vpc_id = aws_vpc.vpc.id
+  dynamic "route" {
+    for_each = flatten([
+      for s in var.Subnets.Private : lookup(s, "AdditionalRoutes", [])
+    ])
+    content {
+      cidr_block           = lookup(route.value, "Cidr", null)
+      network_interface_id = try(route.value.Target, null)
+    }
+  }
+  tags = {
+    Name        = "RtPrivate${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
+}
+
+#################################
+# Routes Assoc Block
+##################################
+
+resource "aws_route_table_association" "public" {
+  count          = length(aws_subnet.public)
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.rt_public[0].id
+}
+
+resource "aws_route_table_association" "nat" {
+  count          = length(aws_subnet.subnet_nat) > 0 ? 0 : 0
+  subnet_id      = aws_subnet.subnet_nat[count.index].id
+  route_table_id = aws_route_table.rt_nat[0].id
+}
+
+resource "aws_route_table_association" "private" {
+  count          = length(aws_subnet.private)
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.rt_private[0].id
 }

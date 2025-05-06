@@ -39,3 +39,55 @@ variable "Subnets" {
     Private = []
   }
 }
+
+variable "Subnets" {
+  type = object({
+    Public = optional(
+      list(object({
+        Name             = string
+        Cidr             = string
+        AdditionalRoutes = optional(
+          list(object({
+            Cidr   = string
+            Target = string
+          })),
+          []
+        )
+      })),
+      []
+    )
+    Nat = optional(
+      list(object({
+        Name             = string
+        Cidr             = string
+        AdditionalRoutes = optional(
+          list(object({
+            Cidr   = string
+            Target = string
+          })),
+          []
+        )
+      })),
+      []
+    )
+    Private = optional(
+      list(object({
+        Name             = string
+        Cidr             = string
+        AdditionalRoutes = optional(
+          list(object({
+            Cidr   = string
+            Target = string
+          })),
+          []
+        )
+      })),
+      []
+    )
+  })
+  default = {
+    Public  = []
+    Nat     = []
+    Private = []
+  }
+}
