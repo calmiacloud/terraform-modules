@@ -24,7 +24,14 @@ resource "aws_subnet" "subnet_public" {
   cidr_block              = var.Subnets.Public[count.index].Cidr
   availability_zone       = element(data.aws_availability_zones.available.names, count.index)
   map_public_ip_on_launch = true
-  assign_ipv6_address_on_creation = var.Vpc.Ipv6Support
+  dynamic "ipv6_cidr_block" {
+    for_each = var.Vpc.Ipv6Support ? [1] : []
+    content  = cidrsubnet(aws_vpc.vpc.ipv6_cidr_block, 8, count.index)
+  }
+  dynamic "assign_ipv6_address_on_creation" {
+    for_each = var.Vpc.Ipv6Support ? [1] : []
+    content  = true
+  }
   tags = {
     Name        = "SubnetPublic${var.Subnets.Public[count.index].Name}"
     Product     = var.Product
