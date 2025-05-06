@@ -1,39 +1,35 @@
-variable "name" {
-  description = "Nombre del Security Group"
+variable "Name" {
   type        = string
 }
 
-variable "vpc_id" {
-  description = "ID de la VPC donde se creará el SG"
+variable "Product" {
   type        = string
 }
 
-variable "rule_tags" {
-  description = "Etiquetas comunes para las reglas de seguridad"
-  type        = map(string)
-  default     = {}
+variable "Environment" {
+  type        = string
 }
 
-variable "ingress_rules" {
-  description = "Reglas de entrada"
+variable "VpcId" {
+  type        = string
+}
+
+variable "Ingress" {
   type = list(object({
-    name        = string
-    from_port   = number
-    to_port     = number
+    FromPort   = number
+    ToPort     = number
     protocol    = string
-    cidr_ipv4   = string
+    Cidr   = string
   }))
   default = []
 }
 
-variable "egress_rules" {
-  description = "Reglas de salida"
+variable "Egress" {
   type = list(object({
-    name        = string
-    from_port   = number
-    to_port     = number
+    FromPort   = number
+    ToPort     = number
     protocol    = string
-    cidr_ipv4   = string
+    Cidr   = string
   }))
   default = []
 }

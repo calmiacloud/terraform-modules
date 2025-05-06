@@ -1,35 +1,47 @@
-resource "aws_security_group" "this" {
-  name        = var.name
-  vpc_id      = var.vpc_id
-  tags        = var.tags
+##############################
+# Name
+##############################
+
+resource "random_string" "random_id" {
+  length  = 6
+  upper   = true
+  lower   = true
+  number  = true
+  special = false
 }
 
-resource "aws_vpc_security_group_ingress_rule" "this" {
-  for_each = { for i, rule in var.ingress_rules : i => rule }
-  security_group_id = aws_security_group.this.id
-  from_port         = each.value.from_port
-  to_port           = each.value.to_port
-  ip_protocol       = each.value.protocol
-  cidr_ipv4         = each.value.cidr_ipv4
-  tags = merge(
-    var.rule_tags,
-    {
-      Name = each.value.name
-    }
-  )
+##############################
+# Security Group
+##############################
+
+resource "aws_security_group" "sg" {
+  name        = "Sg${var.Name}${random_string.random_id.result}"
+  vpc_id      = var.VpcId
+  tags = {
+    Name        = "Sg${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
 }
 
-resource "aws_vpc_security_group_egress_rule" "this" {
-  for_each = { for i, rule in var.egress_rules : i => rule }
-  security_group_id = aws_security_group.this.id
-  from_port         = each.value.from_port
-  to_port           = each.value.to_port
-  ip_protocol       = each.value.protocol
-  cidr_ipv4         = each.value.cidr_ipv4
-  tags = merge(
-    var.rule_tags,
-    {
-      Name = each.value.name
-    }
-  )
+##############################
+# Security Group Rules
+##############################
+
+resource "aws_vpc_security_group_ingress_rule" "ingress" {
+  for_each = { for idx, rule in var.Ingress : idx => rule }
+  security_group_id = aws_security_group.sg.id
+  FromPort         = each.value.FromPort
+  ToPort           = each.value.ToPort
+  protocol          = each.value.protocol
+  cidr_blocks       = [each.value.Cidr]
+}
+
+resource "aws_vpc_security_group_egress_rule" "egress" {
+  for_each = { for idx, rule in var.Egress : idx => rule }
+  security_group_id = aws_security_group.sg.id
+  FromPort         = each.value.FromPort
+  ToPort           = each.value.ToPort
+  protocol          = each.value.protocol
+  cidr_blocks       = [each.value.Cidr]
 }

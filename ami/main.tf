@@ -1,3 +1,7 @@
+##############################
+# Name
+##############################
+
 resource "random_string" "random_id" {
   length  = 6
   upper   = true
@@ -6,13 +10,12 @@ resource "random_string" "random_id" {
   special = false
 }
 
-
 ##############################
 # Bucket
 ##############################
 
 resource "aws_s3_bucket" "bucket" {
-  bucket = lower("BucketAmi${var.Name}${var.random_id}")
+  bucket = lower("BucketAmi${var.Name}${random_string.random_id.result}")
   force_destroy = true
   tags = {
     Name        = "BucketAmi${var.Name}"
