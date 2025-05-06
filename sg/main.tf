@@ -31,17 +31,17 @@ resource "aws_security_group" "sg" {
 resource "aws_vpc_security_group_ingress_rule" "ingress" {
   for_each = { for idx, rule in var.Ingress : idx => rule }
   security_group_id = aws_security_group.sg.id
-  FromPort         = each.value.FromPort
-  ToPort           = each.value.ToPort
-  Protocol          = each.value.Protocol
+  from_port            = each.value.FromPort
+  to_port                = each.value.ToPort
+  ip_protocol          = each.value.Protocol
   Cidr_ipv4        = each.value.Cidr
 }
 
 resource "aws_vpc_security_group_egress_rule" "egress" {
   for_each = { for idx, rule in var.Egress : idx => rule }
   security_group_id = aws_security_group.sg.id
-  FromPort         = each.value.FromPort
-  ToPort           = each.value.ToPort
-  Protocol         = each.value.Protocol
+  from_port            = each.value.FromPort
+  to_port                = each.value.ToPort
+  ip_protocol         = each.value.Protocol
   Cidr_ipv4        = each.value.Cidr
 }
