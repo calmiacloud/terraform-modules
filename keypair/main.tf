@@ -1,3 +1,15 @@
+##############################
+# Name
+##############################
+
+resource "random_string" "random_id" {
+  length  = 6
+  upper   = true
+  lower   = true
+  number  = true
+  special = false
+}
+
 #################################
 # SSH Block
 ##################################
@@ -8,7 +20,7 @@ resource "tls_private_key" "sshpair" {
 }
 
 resource "aws_key_pair" "keypair" {
-  key_name   = var.Name${var.random_id}
+  key_name   = var.Name${random_string.random_id.result}
   public_key = tls_private_key.sshpair.public_key_openssh
   tags = {
     Name        = "vpc-${var.Name}"
