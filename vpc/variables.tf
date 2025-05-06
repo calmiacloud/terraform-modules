@@ -49,6 +49,7 @@ variable "Subnets" {
         AdditionalRoutes = optional(
           list(object({
             Cidr   = string
+            Type   = string
             Target = string
           })),
           []
@@ -63,6 +64,7 @@ variable "Subnets" {
         AdditionalRoutes = optional(
           list(object({
             Cidr   = string
+            Type   = string
             Target = string
           })),
           []
@@ -77,6 +79,7 @@ variable "Subnets" {
         AdditionalRoutes = optional(
           list(object({
             Cidr   = string
+            Type   = string
             Target = string
           })),
           []
@@ -89,5 +92,17 @@ variable "Subnets" {
     Public  = []
     Nat     = []
     Private = []
+  }
+  validation {
+    condition = alltrue([
+      for s in concat(var.Subnets.Public, var.Subnets.Nat, var.Subnets.Private) :
+      alltrue([
+        for r in lookup(s, "AdditionalRoutes", []) :
+        contains(["NetworkInterface", "Otro"], r.Type)
+      ])
+    ])
+    error_message = <<-EOF
+      'AdditionalRoute.Type' tiene ID invalido
+    EOF
   }
 }
