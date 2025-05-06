@@ -16,27 +16,27 @@ variable "VpcId" {
 
 variable "Ingress" {
   type = list(object({
-    from_port = number
-    to_port   = number
-    protocol  = string
-    cidr      = string
+    FromPort = number
+    ToPort   = number
+    Protocol  = string
+    Cidr      = string
   }))
   default = []
 }
 
 variable "Egress" {
   type = list(object({
-    from_port = number
-    to_port   = number
-    protocol  = string
-    cidr      = string
+    FromPort = number
+    ToPort   = number
+    Protocol  = string
+    Cidr      = string
   }))
   default = [
     {
-      from_port = 0
-      to_port   = 0
-      protocol  = "-1"
-      cidr      = "0.0.0.0/0"
+      FromPort = 0
+      ToPort   = 0
+      Protocol  = "-1"
+      Cidr      = "0.0.0.0/0"
     }
   ]
 }

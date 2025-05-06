@@ -33,8 +33,8 @@ resource "aws_vpc_security_group_ingress_rule" "ingress" {
   security_group_id = aws_security_group.sg.id
   FromPort         = each.value.FromPort
   ToPort           = each.value.ToPort
-  protocol          = each.value.protocol
-  cidr_ipv4        = each.value.Cidr
+  Protocol          = each.value.Protocol
+  Cidr_ipv4        = each.value.Cidr
 }
 
 resource "aws_vpc_security_group_egress_rule" "egress" {
@@ -42,6 +42,6 @@ resource "aws_vpc_security_group_egress_rule" "egress" {
   security_group_id = aws_security_group.sg.id
   FromPort         = each.value.FromPort
   ToPort           = each.value.ToPort
-  protocol         = each.value.protocol
-  cidr_ipv4        = each.value.Cidr
+  Protocol         = each.value.Protocol
+  Cidr_ipv4        = each.value.Cidr
 }
