@@ -60,20 +60,42 @@ resource "aws_subnet" "subnet_private" {
 }
 
 ##############################
-# NAT Gateway (si hay NAT)
+# Gateways
 ##############################
+
+##############################
+# Internet Gateway
+##############################
+
+resource "aws_internet_gateway" "ig_internet" {
+  count  = length(var.Subnets.Public) > 0 ? 1 : 0
+  vpc_id = aws_vpc.vpc.id
+  tags = {
+    Name        = "GwI${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
+}
 
 resource "aws_eip" "eip_ig_nat" {
   count  = length(var.Subnets.Nat) > 0 ? 1 : 0
   domain = "vpc"
-  tags = { Name = "EipGwNat${var.Name}" }
+  tags = {
+    Name        = "EipGwNat${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
 }
 
 resource "aws_nat_gateway" "ig_nat" {
   count         = length(var.Subnets.Nat) > 0 ? 1 : 0
   allocation_id = aws_eip.eip_ig_nat[0].id
   subnet_id     = aws_subnet.subnet_public[0].id
-  tags = { Name = "GwNat${var.Name}" }
+  tags = {
+    Name        = "GwNat${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
 }
 
 #################################
