@@ -6,7 +6,7 @@ resource "random_string" "random_id" {
   length  = 6
   upper   = true
   lower   = true
-  number  = true
+  number  = numeric
   special = false
 }
 
