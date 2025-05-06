@@ -31,5 +31,18 @@ variable "Egress" {
     protocol    = string
     Cidr   = string
   }))
-  default = []
+  default = [
+    FromPort   = number
+    ToPort     = number
+    protocol    = "-1"
+    Cidr   = "0.0.0.0/0"
+  ]
+
+
+    protocol    = "-1"
+  from_port   = 0
+  to_port     = 0
+
+  # Origen: cualquier dirección IPv4
+  cidr_blocks = ["0.0.0.0/0"]
 }
