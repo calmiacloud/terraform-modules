@@ -1,40 +1,44 @@
 variable "Name" {
-  type        = string
+  type = string
 }
 
 variable "Product" {
-  type        = string
+  type = string
 }
 
 variable "Environment" {
-  type        = string
+  type = string
 }
 
 variable "VpcId" {
-  type        = string
+  type = string
 }
 
-variable "Ingress" {
+variable "ingress" {
+  description = "Lista de reglas Ingress (puede estar vacía)"
   type = list(object({
-    FromPort   = number
-    ToPort     = number
-    protocol    = string
-    Cidr   = string
+    from_port = number
+    to_port   = number
+    protocol  = string
+    cidr      = string
   }))
   default = []
 }
 
-variable "Egress" {
+variable "egress" {
+  description = "Lista de reglas Egress (por defecto permite todo)"
   type = list(object({
-    FromPort   = number
-    ToPort     = number
-    protocol    = string
-    Cidr   = string
+    from_port = number
+    to_port   = number
+    protocol  = string
+    cidr      = string
   }))
   default = [
-    FromPort   = 0
-    ToPort     = 0
-    protocol    = "-1"
-    Cidr   = "0.0.0.0/0"
+    {
+      from_port = 0
+      to_port   = 0
+      protocol  = "-1"
+      cidr      = "0.0.0.0/0"
+    }
   ]
 }
