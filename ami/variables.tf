@@ -16,12 +16,12 @@ variable "Playbook" {
 
 variable "Instance" {
   type = object({
-    image_id        = string
-    instance_type   = string
-    keypair         = string
-    subnet          = string
-    security_group  = string
-    instanceprofile = string
+    ParentImage    = string
+    InstanceType   = string
+    KeyPair        = string
+    Subnet         = string
+    SecurityGroup  = string
+
   })
 }
 

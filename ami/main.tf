@@ -1,4 +1,6 @@
+##############################
 # Bucket
+##############################
 
 resource "aws_s3_bucket" "bucket" {
   bucket = lower("BucketAmi-${var.Name}")
@@ -18,9 +20,11 @@ resource "aws_s3_object" "object" {
   force_destroy = true
 }
 
-# Attach Policy
+##############################
+# Policies
+##############################
 
-resource "aws_iam_policy" "s3policy" {
+resource "aws_iam_policy" "policy_bucket" {
   name   = "PolicyBucketAmi${var.Name}"
   policy = jsonencode({
     Version = "2012-10-17",
@@ -42,20 +46,35 @@ resource "aws_iam_policy" "s3policy" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "policyattach_role_ec2ssm_rule02" {
-  role       = aws_iam_role.role_ec2ssm.name
-  policy_arn = aws_iam_policy.policy_s3_ec2ssm.arn
+resource "aws_iam_role" "role_ssm" {
+  name   = "PolicySsmAmi${var.Name}"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Principal = { Service = "ec2.amazonaws.com" }
+        Action    = "sts:AssumeRole"
+      }
+    ]
+  })
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+    aws_iam_policy.policy_bucket.arn,
+  ]
+  tags = {
+    Name        = "PolicySsmAmi${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
 }
 
-resource "aws_iam_instance_profile" "instanceprofile_ec2ssm" {
-  name = "${var.platform}-${var.stage}-instanceprofile-ec2ssm-${var.name}"
-  role = aws_iam_role.role_ec2ssm.name
-}
-
-# SSM Document
+##############################
+# Ssm Document
+##############################
 
 resource "aws_ssm_document" "ssmdocument_main" {
-  name          = "${var.platform}-${var.stage}-ssmdocument-${var.name}"
+  name          = "SsmDocAmin${var.Name}"
   document_type = "Automation"
   depends_on = [aws_s3_object.object]
   content = jsonencode({
@@ -70,7 +89,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
           "Service":"ec2",
           "Api":"DescribeImages",
           "Filters":[
-            { "Name":"name", "Values":["${var.platform}-${var.stage}-ami-${var.name}"]},
+            { "Name":"name", "Values": ["Ami${var.Name}"]},
             { "Name":"state", "Values":["available"]}
           ]
         },
@@ -91,12 +110,12 @@ resource "aws_ssm_document" "ssmdocument_main" {
         "nextStep": "TagInstance",
         "isEnd": false,
         "inputs": {
-          "ImageId": "${var.Instance.image_id}",
-          "InstanceType": "${var.Instance.instance_type}",
-          "SecurityGroupIds": ["${var.Instance.security_group}"],
-          "SubnetId": "${var.Instance.subnet}",
-          "KeyName": "${var.Instance.keypair}",
-          "IamInstanceProfileName": "${var.Instance.instanceprofile}"
+          "ImageId": "${var.Instance.ParentImage}",
+          "InstanceType": "${var.Instance.InstanceType}",
+          "SecurityGroupIds": ["${var.Instance.SecurityGroup}"],
+          "SubnetId": "${var.Instance.Subnet}",
+          "KeyName": "${var.Instance.KeyPair}",
+          "IamInstanceProfileName": "${aws_iam_role.role_ssm.name}"
         }
       },
       {
@@ -104,7 +123,11 @@ resource "aws_ssm_document" "ssmdocument_main" {
         "action": "aws:createTags",
         "nextStep": "Update",
         "inputs": {
-          "Tags": [{ "Key": "Name", "Value": "${var.platform}-${var.stage}-ec2instance-ssmdocument-${var.name}" }],
+          "Tags": [
+            { "Key": "Name", "Value": "InstanceSsmAmi${var.Name}" },
+            { "Key": "Product", "Value": var.Product },
+            { "Key": "Environment", "Value": var.Environment },
+          ],
           "ResourceIds": [ "{{ LaunchInstance.InstanceIds }}"]
         }
       },
@@ -213,11 +236,28 @@ resource "aws_ssm_document" "ssmdocument_main" {
       {
         "name": "CreateAmi",
         "action": "aws:createImage",
-        "nextStep": "TerminateInstance",
+        "nextStep": "TagAMI",
         "isEnd": false,
         "inputs": {
           "InstanceId": "{{ LaunchInstance.InstanceIds }}",
-          "ImageName": "${var.platform}-${var.stage}-ami-${var.name}"
+          "ImageName": "Ami${var.Name}"
+        }
+      },
+      {
+        "name": "TagAMI",
+        "action": "aws:createTags",
+        "nextStep": "TerminateInstance",
+        "isEnd": false,
+        "inputs": {
+          "ResourceType": "EC2",
+          "ResourceIds": [
+            "{{ CreateAmi.ImageId }}"
+          ],
+          "Tags": [
+            { "Key": "Name", "Value": "Ami${var.Name}" },
+            { "Key": "Product", "Value": var.Product },
+            { "Key": "Environment", "Value": var.Environment },
+          ],
         }
       },
       {
@@ -232,6 +272,11 @@ resource "aws_ssm_document" "ssmdocument_main" {
       }
     ]
   })
+  tags = {
+    Name        = "SsmDocAmi${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
 }
 
 # Run document
@@ -243,11 +288,6 @@ resource "null_resource" "null_ssm_run" {
   }
   depends_on = [aws_ssm_document.ssmdocument_main]
   provisioner "local-exec" {
-    environment = {
-      AWS_ACCESS_KEY_ID     = var.aws_credentials.access_key
-      AWS_SECRET_ACCESS_KEY = var.aws_credentials.secret_key
-      AWS_DEFAULT_REGION    = var.aws_credentials.region
-    }
     command = <<EOT
       AUTOMATION_ID=$(aws ssm start-automation-execution \
         --document-name ${aws_ssm_document.ssmdocument_main.name} \
@@ -295,12 +335,12 @@ resource "null_resource" "null_ssm_run" {
   }
 }
 
-data "aws_ami" "generated_ami" {
+data "aws_ami" "data_ami" {
   most_recent = true
   owners = ["self"]
   filter {
     name   = "name"
-    values = ["${var.platform}-${var.stage}-ami-${var.name}"]
+    values = ["Ami${var.Name}"]
   }
   depends_on = [null_resource.null_ssm_run]
 }

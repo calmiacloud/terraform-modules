@@ -1,3 +1,3 @@
 output "id" {
-  value  = data.aws_ami.generated_ami.id
+  value  = data.data_ami.generated_ami.id
 }

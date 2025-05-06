@@ -64,10 +64,6 @@ resource "aws_subnet" "subnet_private" {
 # Gateways
 ##############################
 
-##############################
-# Internet Gateway
-##############################
-
 resource "aws_internet_gateway" "ig_internet" {
   count  = length(var.Subnets.Public) > 0 ? 1 : 0
   vpc_id = aws_vpc.vpc.id
