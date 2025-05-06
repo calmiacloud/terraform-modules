@@ -15,70 +15,18 @@ resource "aws_vpc" "vpc" {
 }
 
 ##############################
-# Internet Gateway
+# Subnets
 ##############################
 
-resource "aws_internet_gateway" "ig_internet" {
-  count  = length(var.Subnets.Public) > 0 ? 1 : 0
-  vpc_id = aws_vpc.vpc.id
-  tags = {
-    Name        = "GwI${var.Name}"
-    Product     = var.Product
-    Environment = var.Environment
-  }
-}
-
-resource "aws_eip" "eip_ig_nat" {
-  count  = length(var.Subnets.Nat) > 0 ? 1 : 0
-  domain = "vpc"
-  tags = {
-    Name        = "EipGwNat${var.Name}"
-    Product     = var.Product
-    Environment = var.Environment
-  }
-}
-
-resource "aws_nat_gateway" "ig_nat" {
-  count         = length(var.Subnets.Nat) > 0 ? 1 : 0
-  allocation_id = aws_eip.eip_ig_nat[0].id
-  subnet_id     = aws_subnet.subnet_public[0].id
-  tags = {
-    Name        = "GwNat${var.Name}"
-    Product     = var.Product
-    Environment = var.Environment
-  }
-}
-
-##################################
-# Subnets
-##################################
-
 resource "aws_subnet" "subnet_public" {
-  count                             = length(var.Subnets.Public)
-  vpc_id                            = aws_vpc.vpc.id
-  cidr_block                        = var.Subnets.Public[count.index].Cidr
-  availability_zone                 = element(data.aws_availability_zones.available.names, count.index)
-  map_public_ip_on_launch           = true
-  assign_ipv6_address_on_creation   = var.Vpc.Ipv6Support
+  count                   = length(var.Subnets.Public)
+  vpc_id                  = aws_vpc.vpc.id
+  cidr_block              = var.Subnets.Public[count.index].Cidr
+  availability_zone       = element(data.aws_availability_zones.available.names, count.index)
+  map_public_ip_on_launch = true
+  assign_ipv6_address_on_creation = var.Vpc.Ipv6Support
   tags = {
     Name        = "SubnetPublic${var.Subnets.Public[count.index].Name}"
-    Product     = var.Product
-    Environment = var.Environment
-  }
-}
-
-resource "aws_subnet" "subnet_private" {
-  for_each = {
-    for subnet in concat(
-      [for s in var.Subnets.Nat : merge(s, { type = "nat", key = "Nat${s.Name}" })],
-      [for s in var.Subnets.Private : merge(s, { type = "private", key = "Private${s.Name}" })]
-    ) : subnet.key => subnet
-  }
-  vpc_id            = aws_vpc.vpc.id
-  cidr_block        = var.Subnets.Private[count.index].Cidr
-  availability_zone = element(data.aws_availability_zones.available.names, index(keys(aws_subnet.subnet_private), each.key))
-  tags = {
-    Name        = "SubnetPrivate${var.Subnets.Nat[count.index].Name}"
     Product     = var.Product
     Environment = var.Environment
   }
@@ -97,8 +45,39 @@ resource "aws_subnet" "subnet_nat" {
   }
 }
 
+resource "aws_subnet" "subnet_private" {
+  for_each = {
+    for s in var.Subnets.Private : s.Name => s
+  }
+  vpc_id            = aws_vpc.vpc.id
+  cidr_block        = each.value.Cidr
+  availability_zone = element(data.aws_availability_zones.available.names, 0) # ajusta si tienes varias AZs
+  tags = {
+    Name        = "SubnetPrivate${each.value.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
+}
+
+##############################
+# NAT Gateway (si hay NAT)
+##############################
+
+resource "aws_eip" "eip_ig_nat" {
+  count  = length(var.Subnets.Nat) > 0 ? 1 : 0
+  domain = "vpc"
+  tags = { Name = "EipGwNat${var.Name}" }
+}
+
+resource "aws_nat_gateway" "ig_nat" {
+  count         = length(var.Subnets.Nat) > 0 ? 1 : 0
+  allocation_id = aws_eip.eip_ig_nat[0].id
+  subnet_id     = aws_subnet.subnet_public[0].id
+  tags = { Name = "GwNat${var.Name}" }
+}
+
 #################################
-# Routes Block
+# Route tables
 ##################################
 
 resource "aws_route_table" "rt_public" {
@@ -120,8 +99,8 @@ resource "aws_route_table" "rt_public" {
       for s in var.Subnets.Public : lookup(s, "AdditionalRoutes", [])
     ])
     content {
-      cidr_block                = lookup(route.value, "Cidr", null)
-      network_interface_id      = route.value.Type == "NetworkInterface"     ? route.value.Target : null
+      cidr_block = lookup(route.value, "Cidr", null)
+      network_interface_id      = route.value.Type == "NetworkInterface"      ? route.value.Target : null
     }
   }
   tags = {
@@ -134,17 +113,19 @@ resource "aws_route_table" "rt_public" {
 resource "aws_route_table" "rt_nat" {
   count  = length(var.Subnets.Nat) > 0 ? 1 : 0
   vpc_id = aws_vpc.vpc.id
+  # Ruta por defecto a NAT GW
   route {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.ig_nat[0].id
   }
+  # AdditionalRoutes en NAT
   dynamic "route" {
     for_each = flatten([
-      for s in var.Subnets.Public : lookup(s, "AdditionalRoutes", [])
+      for s in var.Subnets.Nat : lookup(s, "AdditionalRoutes", [])
     ])
     content {
-      cidr_block                = lookup(route.value, "Cidr", null)
-      network_interface_id      = route.value.Type == "NetworkInterface"     ? route.value.Target : null
+      cidr_block = lookup(route.value, "Cidr", null)
+      network_interface_id      = route.value.Type == "NetworkInterface"      ? route.value.Target : null
     }
   }
   tags = {
@@ -154,6 +135,7 @@ resource "aws_route_table" "rt_nat" {
   }
 }
 
+# 3) Privada
 resource "aws_route_table" "rt_private" {
   count  = length(var.Subnets.Private) > 0 ? 1 : 0
   vpc_id = aws_vpc.vpc.id
@@ -162,8 +144,8 @@ resource "aws_route_table" "rt_private" {
       for s in var.Subnets.Private : lookup(s, "AdditionalRoutes", [])
     ])
     content {
-      cidr_block           = lookup(route.value, "Cidr", null)
-      network_interface_id = try(route.value.Target, null)
+      cidr_block = lookup(route.value, "Cidr", null)
+      network_interface_id      = route.value.Type == "NetworkInterface"      ? route.value.Target : null
     }
   }
   tags = {
@@ -174,7 +156,7 @@ resource "aws_route_table" "rt_private" {
 }
 
 #################################
-# Routes Assoc Block
+# Route table associations
 ##################################
 
 resource "aws_route_table_association" "public" {
@@ -184,13 +166,13 @@ resource "aws_route_table_association" "public" {
 }
 
 resource "aws_route_table_association" "nat" {
-  count          = length(aws_subnet.subnet_nat) > 0 ? 0 : 0
+  count          = length(aws_subnet.subnet_nat)
   subnet_id      = aws_subnet.subnet_nat[count.index].id
   route_table_id = aws_route_table.rt_nat[0].id
 }
 
 resource "aws_route_table_association" "private" {
   count          = length(aws_subnet.subnet_private)
-  subnet_id      = aws_subnet.subnet_private[count.index].id
+  subnet_id      = aws_subnet.subnet_private[values(aws_subnet.subnet_private)[count.index].id]
   route_table_id = aws_route_table.rt_private[0].id
 }
