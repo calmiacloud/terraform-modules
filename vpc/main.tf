@@ -41,7 +41,7 @@ resource "aws_eip" "eip_ig_nat" {
 resource "aws_nat_gateway" "ig_nat" {
   count         = length(var.Subnets.Nat) > 0 ? 1 : 0
   allocation_id = aws_eip.eip_ig_nat[0].id
-  subnet_id     = aws_subnet.public[0].id
+  subnet_id     = aws_subnet.subnet_public[0].id
   tags = {
     Name        = "GwNat-${var.Name}"
     Product     = var.Product
@@ -76,7 +76,7 @@ resource "aws_subnet" "subnet_private" {
   }
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = each.value.Cidr
-  availability_zone = element(data.aws_availability_zones.available.names, index(keys(aws_subnet.private), each.key))
+  availability_zone = element(data.aws_availability_zones.available.names, index(keys(aws_subnet.subnet_private), each.key))
   tags = {
     Name        = "Subnet${each.value.type}-${each.value.Name}"
     Product     = var.Product
@@ -177,7 +177,7 @@ resource "aws_route_table_association" "nat" {
 }
 
 resource "aws_route_table_association" "private" {
-  count          = length(aws_subnet.private)
-  subnet_id      = aws_subnet.private[count.index].id
+  count          = length(aws_subnet.subnet_private)
+  subnet_id      = aws_subnet.subnet_private[count.index].id
   route_table_id = aws_route_table.rt_private[0].id
 }
