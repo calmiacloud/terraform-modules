@@ -1,9 +1,18 @@
+resource "random_string" "random_id" {
+  length  = 6
+  upper   = true
+  lower   = true
+  number  = true
+  special = false
+}
+
+
 ##############################
 # Bucket
 ##############################
 
 resource "aws_s3_bucket" "bucket" {
-  bucket = lower("BucketAmi-${var.Name}")
+  bucket = lower("BucketAmi${var.Name}${var.random_id}")
   force_destroy = true
   tags = {
     Name        = "BucketAmi${var.Name}"
@@ -25,7 +34,7 @@ resource "aws_s3_object" "object" {
 ##############################
 
 resource "aws_iam_policy" "policy_bucket" {
-  name   = "PolicyBucketAmi${var.Name}"
+  name   = "PolicyBucketAmi${var.random_id}"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement: [
@@ -47,7 +56,7 @@ resource "aws_iam_policy" "policy_bucket" {
 }
 
 resource "aws_iam_role" "role_ssm" {
-  name   = "PolicySsmAmi${var.Name}"
+  name   = "RoleSsmAmi${var.random_id}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -74,7 +83,7 @@ resource "aws_iam_role" "role_ssm" {
 ##############################
 
 resource "aws_ssm_document" "ssmdocument_main" {
-  name          = "SsmDocAmin${var.Name}"
+  name          = "SsmDocAmin${var.Name}${var.random_id}"
   document_type = "Automation"
   depends_on = [aws_s3_object.object]
   content = jsonencode({
@@ -89,7 +98,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
           "Service":"ec2",
           "Api":"DescribeImages",
           "Filters":[
-            { "Name":"name", "Values": ["Ami${var.Name}"]},
+            { "Name":"name", "Values": ["Ami${var.Name}${var.random_id}"]},
             { "Name":"state", "Values":["available"]}
           ]
         },
@@ -124,7 +133,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
         "nextStep": "Update",
         "inputs": {
           "Tags": [
-            { "Key": "Name", "Value": "InstanceSsmAmi${var.Name}" },
+            { "Key": "Name", "Value": "InstanceSsmAmi${var.Name}${var.random_id}" },
             { "Key": "Product", "Value": var.Product },
             { "Key": "Environment", "Value": var.Environment },
           ],
@@ -240,7 +249,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
         "isEnd": false,
         "inputs": {
           "InstanceId": "{{ LaunchInstance.InstanceIds }}",
-          "ImageName": "Ami${var.Name}"
+          "ImageName": "Ami${var.Name}${var.random_id}"
         }
       },
       {
@@ -254,7 +263,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
             "{{ CreateAmi.ImageId }}"
           ],
           "Tags": [
-            { "Key": "Name", "Value": "Ami${var.Name}" },
+            { "Key": "Name", "Value": "Ami${var.Name}${var.random_id}" },
             { "Key": "Product", "Value": var.Product },
             { "Key": "Environment", "Value": var.Environment },
           ],
@@ -340,7 +349,7 @@ data "aws_ami" "data_ami" {
   owners = ["self"]
   filter {
     name   = "name"
-    values = ["Ami${var.Name}"]
+    values = ["Ami${var.Name}${var.random_id}"]
   }
   depends_on = [null_resource.null_ssm_run]
 }

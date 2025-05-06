@@ -8,7 +8,7 @@ resource "tls_private_key" "sshpair" {
 }
 
 resource "aws_key_pair" "keypair" {
-  key_name   = var.Name
+  key_name   = var.Name${var.random_id}
   public_key = tls_private_key.sshpair.public_key_openssh
   tags = {
     Name        = "vpc-${var.Name}"
