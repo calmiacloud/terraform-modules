@@ -14,8 +14,7 @@ variable "VpcId" {
   type = string
 }
 
-variable "ingress" {
-  description = "Lista de reglas Ingress (puede estar vacía)"
+variable "Ingress" {
   type = list(object({
     from_port = number
     to_port   = number
@@ -25,8 +24,7 @@ variable "ingress" {
   default = []
 }
 
-variable "egress" {
-  description = "Lista de reglas Egress (por defecto permite todo)"
+variable "Egress" {
   type = list(object({
     from_port = number
     to_port   = number
