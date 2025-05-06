@@ -1,20 +1,20 @@
-variable "name" {
+variable "Name" {
+  type        = string
+}
+
+variable "Product" {
+  type        = string
+}
+
+variable "Environment" {
+  type        = string
+}
+
+variable "Playbook" {
   type  = string
 }
 
-variable "stage" {
-  type  = string
-}
-
-variable "platform" {
-  type  = string
-}
-
-variable "playbook" {
-  type  = string
-}
-
-variable "instance" {
+variable "Instance" {
   type = object({
     image_id        = string
     instance_type   = string
@@ -25,15 +25,7 @@ variable "instance" {
   })
 }
 
-variable "extravars" {
+variable "ExtraVars" {
   type = map(any)
   default = {}
-}
-
-variable "aws_credentials" {
-  type  = object({
-    access_key  = string
-    secret_key = string
-    region = string
-  })
 }

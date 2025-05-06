@@ -1,22 +1,27 @@
 # Bucket
 
 resource "aws_s3_bucket" "bucket" {
-  bucket = "${var.platform}-${var.stage}-bucket-ami-${var.name}"
+  bucket = lower("BucketAmi-${var.Name}")
   force_destroy = true
+  tags = {
+    Name        = "BucketAmi${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
 }
 
-resource "aws_s3_object" "bucketobject" {
+resource "aws_s3_object" "object" {
   bucket = aws_s3_bucket.bucket.bucket
   key    = "playbook.yml"
-  source = var.playbook
-  etag   = filemd5(var.playbook)
+  source = var.Playbook
+  etag   = filemd5(var.Playbook)
   force_destroy = true
 }
 
 # Attach Policy
 
-resource "aws_iam_policy" "policy_s3_playbook" {
-  name        = "${var.platform}-${var.stage}-policy-bucket-ami-${var.name}"
+resource "aws_iam_policy" "s3policy" {
+  name   = "PolicyBucketAmi${var.Name}"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement: [
@@ -30,6 +35,11 @@ resource "aws_iam_policy" "policy_s3_playbook" {
       }
     ]
   })
+  tags = {
+    Name        = "PolicyBucketAmi${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "policyattach_role_ec2ssm_rule02" {
@@ -47,7 +57,7 @@ resource "aws_iam_instance_profile" "instanceprofile_ec2ssm" {
 resource "aws_ssm_document" "ssmdocument_main" {
   name          = "${var.platform}-${var.stage}-ssmdocument-${var.name}"
   document_type = "Automation"
-  depends_on = [aws_s3_object.bucketobject]
+  depends_on = [aws_s3_object.object]
   content = jsonencode({
     "schemaVersion": "0.3",
     "mainSteps": [
@@ -81,12 +91,12 @@ resource "aws_ssm_document" "ssmdocument_main" {
         "nextStep": "TagInstance",
         "isEnd": false,
         "inputs": {
-          "ImageId": "${var.instance.image_id}",
-          "InstanceType": "${var.instance.instance_type}",
-          "SecurityGroupIds": ["${var.instance.security_group}"],
-          "SubnetId": "${var.instance.subnet}",
-          "KeyName": "${var.instance.keypair}",
-          "IamInstanceProfileName": "${var.instance.instanceprofile}"
+          "ImageId": "${var.Instance.image_id}",
+          "InstanceType": "${var.Instance.instance_type}",
+          "SecurityGroupIds": ["${var.Instance.security_group}"],
+          "SubnetId": "${var.Instance.subnet}",
+          "KeyName": "${var.Instance.keypair}",
+          "IamInstanceProfileName": "${var.Instance.instanceprofile}"
         }
       },
       {
@@ -178,7 +188,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
           "DocumentName": "AWS-RunShellScript",
           "Parameters": {
             "commands": [
-              "aws s3 cp s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.bucketobject.key} /tmp/playbook.yml"
+              "aws s3 cp s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key} /tmp/playbook.yml"
             ]
           }
         }
@@ -228,7 +238,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
 
 resource "null_resource" "null_ssm_run" {
   triggers = {
-    playbook_checksum = filemd5(var.playbook)
+    playbook_checksum = filemd5(var.Playbook)
     extravars_hash    = md5(jsonencode(var.extravars))
   }
   depends_on = [aws_ssm_document.ssmdocument_main]
