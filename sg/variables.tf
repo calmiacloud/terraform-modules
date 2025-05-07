@@ -28,13 +28,16 @@ variable "Egress" {
   type = list(object({
     FromPort = number
     ToPort   = number
-    Protocol  = string
-    Cidr      = string
+    Protocol = string
+    Cidr     = string
   }))
   default = [
     {
-      Protocol  = "-1"
-      Cidr      = "0.0.0.0/0"
+      FromPort = 0
+      ToPort   = 0
+      Protocol = "-1"
+      Cidr     = "0.0.0.0/0"
     }
   ]
 }
+
