@@ -105,7 +105,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
             { "Name":"state", "Values":["available"]}
           ]
         },
-        "outputs":[ { "Name":"ImageId", "Selector":"$.Images[0].ImageId", "Type":"String" } ]
+        "Outputs": [{ "Name": "ImageId", "Selector": "$.Images[0].ImageId", "Type": "String"}]
       },
       {
         "name": "DeleteAMI",
