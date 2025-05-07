@@ -109,13 +109,15 @@ resource "aws_ssm_document" "ssmdocument_main" {
       },
       {
         "name": "DeleteAMI",
-        "action": "aws:deleteImage",
+        "action": "aws:executeAwsApi",
         "nextStep": "LaunchInstance",
         "isCritical": false,
         "isEnd": false,
         "onFailure": "step:LaunchInstance",
         "inputs": {
-          "ImageId.$": "$.DescribeImage.ImageId"
+          "Service": "ec2",
+          "Api":     "DeleteImage",
+          "ImageId": "{{ DescribeImage.Outputs.ImageId }}"
         }
       },
       {
