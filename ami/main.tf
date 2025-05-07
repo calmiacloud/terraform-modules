@@ -108,13 +108,15 @@ resource "aws_ssm_document" "ssmdocument_main" {
         "outputs":[ { "Name":"ImageId", "Selector":"$.Images[0].ImageId", "Type":"String" } ]
       },
       {
-         "name":"DeleteAMI",
-         "action":"aws:deleteImage",
-         "nextStep":"LaunchInstance",
-         "isCritical": false,
-         "isEnd":false,
-         "onFailure":"step:LaunchInstance",
-         "inputs":{ "ImageId":"{{ DescribeImage.ImageId }}"}
+        "name": "DeleteAMI",
+        "action": "aws:deleteImage",
+        "nextStep": "LaunchInstance",
+        "isCritical": false,
+        "isEnd": false,
+        "onFailure": "step:LaunchInstance",
+        "inputs": {
+          "ImageId.$": "$.DescribeImage.ImageId"
+        }
       },
       {
         "name": "LaunchInstance",
