@@ -40,12 +40,8 @@ resource "aws_vpc_security_group_ingress_rule" "ingress" {
 resource "aws_vpc_security_group_egress_rule" "egress" {
   for_each = { for idx, rule in var.Egress : idx => rule }
   security_group_id = aws_security_group.sg.id
-  from_port = each.value.Protocol != "-1"
-    ? each.value.FromPort
-    : null
-  to_port   = each.value.Protocol != "-1"
-    ? each.value.ToPort
-    : null
+  from_port = each.value.Protocol != "-1" ? each.value.FromPort : null
+  to_port   = each.value.Protocol != "-1" ? each.value.ToPort   : null
   ip_protocol         = each.value.Protocol
   cidr_ipv4        = each.value.Cidr
 }
