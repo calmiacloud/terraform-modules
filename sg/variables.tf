@@ -33,8 +33,6 @@ variable "Egress" {
   }))
   default = [
     {
-      FromPort = 0
-      ToPort   = 0
       Protocol  = "-1"
       Cidr      = "0.0.0.0/0"
     }
