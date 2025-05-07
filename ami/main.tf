@@ -59,7 +59,7 @@ resource "aws_iam_policy" "policy_bucket" {
 }
 
 resource "aws_iam_role" "role_ssm" {
-  name   = "RoleSsmAmi${var.random_id}"
+  name   = "RoleSsmAmi${random_string.random_id.result}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -86,7 +86,7 @@ resource "aws_iam_role" "role_ssm" {
 ##############################
 
 resource "aws_ssm_document" "ssmdocument_main" {
-  name          = "SsmDocAmin${var.Name}${var.random_id}"
+  name          = "SsmDocAmin${var.Name}${random_string.random_id.result}"
   document_type = "Automation"
   depends_on = [aws_s3_object.object]
   content = jsonencode({
@@ -101,7 +101,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
           "Service":"ec2",
           "Api":"DescribeImages",
           "Filters":[
-            { "Name":"name", "Values": ["Ami${var.Name}${var.random_id}"]},
+            { "Name":"name", "Values": ["Ami${var.Name}${random_string.random_id.result}"]},
             { "Name":"state", "Values":["available"]}
           ]
         },
@@ -136,7 +136,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
         "nextStep": "Update",
         "inputs": {
           "Tags": [
-            { "Key": "Name", "Value": "InstanceSsmAmi${var.Name}${var.random_id}" },
+            { "Key": "Name", "Value": "InstanceSsmAmi${var.Name}${random_string.random_id.result}" },
             { "Key": "Product", "Value": var.Product },
             { "Key": "Environment", "Value": var.Environment },
           ],
@@ -252,7 +252,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
         "isEnd": false,
         "inputs": {
           "InstanceId": "{{ LaunchInstance.InstanceIds }}",
-          "ImageName": "Ami${var.Name}${var.random_id}"
+          "ImageName": "Ami${var.Name}${random_string.random_id.result}"
         }
       },
       {
@@ -266,7 +266,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
             "{{ CreateAmi.ImageId }}"
           ],
           "Tags": [
-            { "Key": "Name", "Value": "Ami${var.Name}${var.random_id}" },
+            { "Key": "Name", "Value": "Ami${var.Name}${random_string.random_id.result}" },
             { "Key": "Product", "Value": var.Product },
             { "Key": "Environment", "Value": var.Environment },
           ],
@@ -352,7 +352,7 @@ data "aws_ami" "data_ami" {
   owners = ["self"]
   filter {
     name   = "name"
-    values = ["Ami${var.Name}${var.random_id}"]
+    values = ["Ami${var.Name}${random_string.random_id.result}"]
   }
   depends_on = [null_resource.null_ssm_run]
 }
