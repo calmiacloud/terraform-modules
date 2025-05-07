@@ -117,7 +117,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
         "inputs": {
           "Service": "ec2",
           "Api":     "DeleteImage",
-          "ImageId": "{{ DescribeImage.Outputs.ImageId }}"
+          "ImageId": "{{ DescribeImage.ImageId }}"
         }
       },
       {
