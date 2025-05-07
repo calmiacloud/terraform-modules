@@ -26,6 +26,6 @@ variable "Instance" {
 }
 
 variable "ExtraVars" {
-  type = map(any)
-  default = {}
+  type        = map(any)
+  default     = {}
 }

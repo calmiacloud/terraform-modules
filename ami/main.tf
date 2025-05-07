@@ -239,7 +239,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
           "DocumentName": "AWS-RunShellScript",
           "Parameters": {
             "commands": [
-              "echo '${jsonencode(var.extravars)}' > /tmp/extravars.json",
+              "echo '${jsonencode(var.ExtraVars)}' > /tmp/extravars.json",
               "ansible-playbook -i localhost, -e 'ansible_connection=local ansible_python_interpreter=/usr/bin/python3' -e @/tmp/extravars.json /tmp/playbook.yml"
             ]
           }
@@ -296,7 +296,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
 resource "null_resource" "null_ssm_run" {
   triggers = {
     playbook_checksum = filemd5(var.Playbook)
-    extravars_hash    = md5(jsonencode(var.extravars))
+    extravars_hash    = md5(jsonencode(var.ExtraVars))
   }
   depends_on = [aws_ssm_document.ssmdocument_main]
   provisioner "local-exec" {
