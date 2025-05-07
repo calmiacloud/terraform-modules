@@ -37,7 +37,7 @@ resource "aws_s3_object" "object" {
 ##############################
 
 resource "aws_iam_policy" "policy_bucket" {
-  name   = "PolicyBucketAmi${var.random_id}"
+  name   = "PolicyBucketAmi${random_string.random_id.result}"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement: [
