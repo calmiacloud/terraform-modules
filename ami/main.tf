@@ -292,7 +292,7 @@ resource "aws_ssm_document" "ssmdocument_main" {
 }
 
 # Run document
-
+/*
 resource "null_resource" "null_ssm_run" {
   triggers = {
     playbook_checksum = filemd5(var.Playbook)
@@ -356,3 +356,4 @@ data "aws_ami" "data_ami" {
   }
   depends_on = [null_resource.null_ssm_run]
 }
+*/
