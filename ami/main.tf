@@ -86,7 +86,7 @@ resource "aws_iam_role" "role_ssm" {
 ##############################
 
 resource "aws_ssm_document" "ssmdocument_main" {
-  name          = "SsmDocAmin${var.Name}${random_string.random_id.result}"
+  name          = "SsmDocAmi${var.Name}${random_string.random_id.result}"
   document_type = "Automation"
   depends_on = [aws_s3_object.object]
   content = jsonencode({
