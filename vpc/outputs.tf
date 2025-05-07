@@ -3,28 +3,22 @@ output "Id" {
 }
 
 output "SubnetPublic" {
-  value = length(var.Subnets.Public) > 0
-    ? {
-        for idx in range(length(var.Subnets.Public)) :
-        var.Subnets.Public[idx].Name => aws_subnet.subnet_public[idx].id
-      }
-    : {}
+  value = {
+    for idx in range(length(var.Subnets.Public)) :
+    var.Subnets.Public[idx].Name => aws_subnet.subnet_public[idx].id
+  }
 }
 
 output "SubnetNat" {
-  value = length(var.Subnets.Nat) > 0
-    ? {
-        for idx in range(length(var.Subnets.Nat)) :
-        var.Subnets.Nat[idx].Name => aws_subnet.subnet_nat[idx].id
-      }
-    : {}
+  value = {
+    for idx in range(length(var.Subnets.Nat)) :
+    var.Subnets.Nat[idx].Name => aws_subnet.subnet_nat[idx].id
+  }
 }
 
 output "SubnetPrivate" {
-  value = length(var.Subnets.Private) > 0
-    ? {
-        for name, subnet in aws_subnet.subnet_private :
-        name => subnet.id
-      }
-    : {}
+  value = {
+    for name, subnet in aws_subnet.subnet_private :
+    name => subnet.id
+  }
 }
