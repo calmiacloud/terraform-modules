@@ -1,11 +1,11 @@
-output "id" {
+output "Id" {
   value = aws_key_pair.keypair.id
 }
 
-output "arn" {
+output "Arn" {
   value = aws_key_pair.keypair.arn
 }
 
-output "name" {
+output "Name" {
   value = aws_key_pair.keypair.key_name
 }
