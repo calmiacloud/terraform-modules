@@ -1,3 +1,90 @@
+##############################
+# Name
+##############################
+
+resource "random_string" "random_id" {
+  length  = 6
+  upper   = true
+  lower   = true
+  numeric = true
+  special = false
+}
+
+##############################
+# Bucket
+##############################
+
+resource "aws_s3_bucket" "bucket" {
+  bucket = lower("BucketAmi${var.Name}${random_string.random_id.result}")
+  force_destroy = true
+  tags = {
+    Name        = "BucketAmi${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
+}
+
+resource "aws_s3_object" "object" {
+  bucket = aws_s3_bucket.bucket.bucket
+  key    = "playbook.yml"
+  source = var.Playbook
+  etag   = filemd5(var.Playbook)
+  force_destroy = true
+}
+
+##############################
+# Policies
+##############################
+
+resource "aws_iam_policy" "policy_bucket" {
+  name   = "PolicyBucketAmi${random_string.random_id.result}"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement: [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:GetObject",
+          "s3:HeadObject"
+        ],
+        Resource = "${aws_s3_bucket.bucket.arn}/*"
+      }
+    ]
+  })
+  tags = {
+    Name        = "PolicyBucketAmi${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
+}
+
+resource "aws_iam_role" "role_ssm" {
+  name   = "RoleSsmAmi${random_string.random_id.result}"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Principal = { Service = "ec2.amazonaws.com" }
+        Action    = "sts:AssumeRole"
+      }
+    ]
+  })
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+    aws_iam_policy.policy_bucket.arn,
+  ]
+  tags = {
+    Name        = "PolicySsmAmi${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
+}
+
+##############################
+# RESTO
+##############################
+
 resource "aws_image_builder_image_recipe" "example_recipe" {
   name        = "example-recipe"
   description = "Example Image Recipe"
@@ -26,21 +113,12 @@ resource "aws_image_builder_infrastructure_configuration" "example_infrastructur
 
 resource "aws_image_builder_image_pipeline" "example_pipeline" {
   name        = "example-pipeline"
-  description = "Pipeline for building AMI with custom workflow"
-  
   image_recipe_arn                    = aws_image_builder_image_recipe.example_recipe.arn
   infrastructure_configuration_arn     = aws_image_builder_infrastructure_configuration.example_infrastructure.arn
-  
   status = "ENABLED"
-
-  # Usando el workflow predefinido de AWS
   build {
     workflow {
       arn = "arn:aws:imagebuilder:eu-south-2:aws:workflow/build/build-image/1.0.2"
-    }
-    schedule {
-      frequency = "Daily"  # Ejemplo: puedes hacer que se ejecute diariamente
-      start_time = "00:00"
     }
   }
 }
