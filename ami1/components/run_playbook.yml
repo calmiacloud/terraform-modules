@@ -26,3 +26,11 @@ phases:
                 -e "ansible_connection=local ansible_python_interpreter=/usr/bin/python3" \
                 -e @/tmp/extravars.json \
                 /tmp/playbook.yml
+      - name: Reboot
+        action: Reboot
+        onFailure: Abort
+      - name: PostReboot
+        action: ExecuteBash
+        inputs:
+          commands:
+            - echo 'The system has restarted successfully.'

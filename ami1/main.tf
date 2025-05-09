@@ -146,10 +146,8 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
   name         = "AmiRecipe${var.Name}${random_string.random_id.result}"
   version      = "1.0.0"
   parent_image = var.Instance.ParentImage
-  component { component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/update-linux/1.0.2/1" }
-  component { component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/reboot-linux/1.0.1/1" }
   component { component_arn = aws_imagebuilder_component.component_basicpackages.arn }
-  component { component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/aws-cli-version-2-linux/1.0.4/1" }
+  #component { component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/aws-cli-version-2-linux/1.0.4/1" }
   component { component_arn = aws_imagebuilder_component.component_installansible.arn }
   component {
     component_arn = aws_imagebuilder_component.component_downloadplaybook.arn
@@ -186,6 +184,25 @@ resource "aws_imagebuilder_infrastructure_configuration" "infra_main" {
   instance_types       = [var.Instance.InstanceType]
   subnet_id            = var.Instance.Subnet
   security_group_ids   = [var.Instance.SecurityGroup]
+  key_pair             = var.Instance.KeyPair
+}
+
+##############################
+# Distribution Configuration
+##############################
+
+resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
+  name = "AmiDistribution${var.Name}${random_string.random_id.result}"
+  distributions {
+    ami_distribution_configuration {
+      name        = "Ami${var.Name}${random_string.random_id.result}"
+      tags = {
+        Name        = var.Name
+        Product     = var.Product
+        Environment = var.Environment
+      }
+    }
+  }
 }
 
 ##############################
@@ -196,4 +213,10 @@ resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
   name                                = "AmiPipeline${var.Name}${random_string.random_id.result}"
   image_recipe_arn                    = aws_imagebuilder_image_recipe.recipe_main.arn
   infrastructure_configuration_arn    = aws_imagebuilder_infrastructure_configuration.infra_main.arn
+  distribution_configuration_arn   = aws_imagebuilder_distribution_configuration.distribution_main.arn
+  image_tests_configuration {
+    image_tests_enabled = false
+  }
 }
+
+# aws imagebuilder start-image-pipeline-execution --image-pipeline-arn $ARN

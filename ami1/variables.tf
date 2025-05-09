@@ -18,6 +18,7 @@ variable "Instance" {
   type = object({
     ParentImage    = string
     InstanceType   = string
+    KeyPair        = string
     Subnet         = string
     SecurityGroup  = string
   })
