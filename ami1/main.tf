@@ -158,14 +158,19 @@ resource "aws_imagebuilder_component" "component_runplaybook" {
 name: run-playbook-with-extravars
 schemaVersion: 1.0
 
+name: run-playbook-with-extravars
+description: "Vuelca el JSON de ExtraVars en /tmp/extravars.json y lanza ansible-playbook"
+schemaVersion: '1.0'
+
 parameters:
   - name: ExtraVars
     type: string
+    description: "JSON con las variables extra para el playbook"
 
 phases:
   - name: build
     steps:
-      - name: write-extravars
+      - name: WriteExtravars
         action: ExecuteBash
         inputs:
           commands:
@@ -173,7 +178,8 @@ phases:
               cat << 'EOF' > /tmp/extravars.json
               {{ ExtraVars }}
               EOF
-      - name: run-playbook
+
+      - name: RunPlaybook
         action: ExecuteBash
         inputs:
           commands:
@@ -221,6 +227,9 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
   }
   component {
     component_arn = aws_imagebuilder_component.component_runplaybook.arn
+    parameters = {
+      ExtraVars = jsonencode(var.ExtraVars)
+    }
   }
   component {
     component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/reboot-linux/1.0.1/1"
