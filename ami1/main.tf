@@ -194,10 +194,10 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
     component_arn = aws_image_builder_component.component_basicpackages.arn
   }
   component {
-    component_arn = aws_image_builder_component.component_ansible.arn
+    component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/aws-cli-version-2-linux/1.0.4/1"
   }
   component {
-    component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/aws-cli-version-2-linux/1.0.4/1"
+    component_arn = aws_image_builder_component.component_ansible.arn
   }
   component {
     component_arn = aws_image_builder_component.component_downloadplaybook.arn
