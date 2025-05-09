@@ -153,22 +153,22 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
       volume_type = "gp3"
     }
   }
-  components {
+  component {
     component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/update-linux/1.0.2/1"
   }  
-  components {
+  component {
     component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/reboot-linux/1.0.1/1"
   }
-  components {
+  component {
     component_arn = aws_image_builder_component.component_basicpackages.arn
   }
-  components {
+  component {
     component_arn = aws_image_builder_component.component_ansible.arn
   }
-  components {
+  component {
     component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/aws-cli-version-2-linux/1.0.4/1"
   }
-  components {
+  component {
     component_arn = aws_image_builder_component.component_downloadplaybook.arn
   }
   tags = {
