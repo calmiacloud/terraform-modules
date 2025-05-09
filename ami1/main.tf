@@ -119,6 +119,24 @@ resource "aws_image_builder_component" "component_ansible" {
     EOF
 }
 
+resource "aws_image_builder_component" "component_downloadplaybook" {
+  name        = "AmiComponentDownloadPlaybook${var.Name}${random_string.random_id.result}"
+  version     = "1.0.0"
+  platform = "Ubuntu"
+  inline = <<EOF
+    name: "CustomComponent"
+    version: "1.0.0"
+    phases:
+    build:
+        commands:
+        - name: "DownloadPlaybook"
+            action: S3Download
+            inputs:
+            - source: "s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}"
+                destination: "/tmp/playbook.yml"
+    EOF
+}
+
 ##############################
 # Recipe Block
 ##############################
@@ -148,7 +166,10 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
     component_arn = aws_image_builder_component.component_ansible.arn
   }
   components {
-    component_arn = arn:aws:imagebuilder:eu-south-2:aws:component/aws-cli-version-2-linux/1.0.4/1
+    component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/aws-cli-version-2-linux/1.0.4/1"
+  }
+  components {
+    component_arn = aws_image_builder_component.component_downloadplaybook.arn
   }
   tags = {
     Name        = "AmiRecipe${var.Name}"
