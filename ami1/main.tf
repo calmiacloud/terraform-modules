@@ -92,7 +92,6 @@ resource "aws_imagebuilder_component" "component_basicpackages" {
   data = <<EOF
 name: apt-basic-packages
 schemaVersion: 1.0
-
 phases:
   - name: build
     steps:
@@ -111,7 +110,6 @@ resource "aws_imagebuilder_component" "component_installansible" {
   data = <<EOF
 name: apt-install-ansible
 schemaVersion: 1.0
-
 phases:
   - name: build
     steps:
@@ -157,20 +155,14 @@ resource "aws_imagebuilder_component" "component_runplaybook" {
   data = <<EOF
 name: run-playbook-with-extravars
 schemaVersion: 1.0
-
-name: run-playbook-with-extravars
-description: "Vuelca el JSON de ExtraVars en /tmp/extravars.json y lanza ansible-playbook"
-schemaVersion: '1.0'
-
 parameters:
   - name: ExtraVars
     type: string
     description: "JSON con las variables extra para el playbook"
-
 phases:
-  - name: build
+  build:
     steps:
-      - name: WriteExtravars
+      - name: "WriteExtravars"
         action: ExecuteBash
         inputs:
           commands:
@@ -178,8 +170,7 @@ phases:
               cat << 'EOF' > /tmp/extravars.json
               {{ ExtraVars }}
               EOF
-
-      - name: RunPlaybook
+      - name: "RunPlaybook"
         action: ExecuteBash
         inputs:
           commands:
