@@ -88,9 +88,7 @@ resource "aws_imagebuilder_component" "component_basicpackages" {
   name        = "AmiComponentBasicPackages${var.Name}${random_string.random_id.result}"
   version     = "1.0.0"
   platform    = "Linux"
-  data = <<EOF
-name: "CustomComponent"
-version: "1.0.0"
+  data        = <<EOF
 phases:
   build:
     commands:
@@ -106,9 +104,7 @@ resource "aws_imagebuilder_component" "component_installansible" {
   name        = "AmiComponentAnsible${var.Name}${random_string.random_id.result}"
   version     = "1.0.0"
   platform    = "Linux"
-  data = <<EOF
-name: "CustomComponent"
-version: "1.0.0"
+  data        = <<EOF
 phases:
   build:
     commands:
@@ -135,8 +131,6 @@ resource "aws_imagebuilder_component" "component_downloadplaybook" {
   version     = "1.0.0"
   platform    = "Linux"
   data        = <<EOF
-name: "CustomComponent"
-version: "1.0.0"
 phases:
   build:
     commands:
@@ -153,8 +147,6 @@ resource "aws_imagebuilder_component" "component_runplaybook" {
   version     = "1.0.0"
   platform    = "Linux"
   data        = <<EOF
-name: "CustomComponent"
-version: "1.0.0"
 phases:
   build:
     commands:
