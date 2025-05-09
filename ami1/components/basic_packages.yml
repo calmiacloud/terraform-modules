@@ -1,0 +1,11 @@
+name: AmiComponentBasicPackages
+schemaVersion: "1.0"
+
+phases:
+  - name: build
+    steps:
+      - name: basic-packages
+        action: ExecuteBash
+        inputs:
+          commands:
+            - sudo apt-get install -y curl wget unzip software-properties-common

@@ -86,99 +86,51 @@ resource "aws_iam_role" "role_ssm" {
 ##############################
 
 resource "aws_imagebuilder_component" "component_basicpackages" {
-  name     = "AmiComponentBasicPackages-${var.Name}-${random_string.random_id.result}"
+  name     = "AmiComponentBasicPackages${var.Name}${random_string.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
-  data = <<EOF
-name: AmiComponentBasicPackages
-schemaVersion: 1.0
-phases:
-  - name: build
-    steps:
-      - name: basic-packages
-        action: ExecuteBash
-        inputs:
-          commands:
-            - sudo apt-get install -y curl wget unzip software-properties-common
-EOF
+  data     = file("${path.module}/components/basic_packages.yml")
+  tags = {
+    Name        = "AmiComponentBasicPackages${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
 }
 
 resource "aws_imagebuilder_component" "component_installansible" {
-  name     = "AmiComponentAnsible-${var.Name}-${random_string.random_id.result}"
+  name     = "AmiComponentAnsible${var.Name}${random_string.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
-  data = <<EOF
-name: AmiComponentAnsible
-schemaVersion: 1.0
-phases:
-  - name: build
-    steps:
-      - name: Repo
-        action: ExecuteBash
-        inputs:
-          commands:
-            - add-apt-repository --yes --update ppa:ansible/ansible
-            - apt-get update
-      - name: Install
-        action: ExecuteBash
-        inputs:
-          commands:
-            - apt-get install -y ansible
-EOF
+  data     = file("${path.module}/components/install_ansible.yml")
+  tags = {
+    Name        = "AmiComponentAnsible${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
 }
 
 resource "aws_imagebuilder_component" "component_downloadplaybook" {
-  name     = "AmiComponentDownloadPlaybook-${var.Name}-${random_string.random_id.result}"
+  name     = "AmiComponentDownloadPlaybook${var.Name}${random_string.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
-  data = <<EOF
-name: "AmiComponentDownloadPlaybook"
-schemaVersion: 1.0
-phases:
-  - name: build
-    steps:
-      - name: DownloadPlaybook
-        action: S3Download
-        maxAttempts: 3
-        inputs:
-          - source: "s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}"
-            destination: "/tmp/playbook.yml"
-            overwrite: true
-EOF
+  data     = file("${path.module}/components/download_playbook.yml")
+  tags = {
+    Name        = "AmiComponentDownloadPlaybook${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
 }
 
 resource "aws_imagebuilder_component" "component_runplaybook" {
-  name             = "AmiComponentRunPlaybook-${var.Name}-${random_string.random_id.result}"
+  name             = "AmiComponentRunPlaybook${var.Name}${random_string.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
-  data = <<-EOF
-name: AmiComponentRunPlaybook
-schemaVersion: "1.0"
-parameters:
-  - ExtraVars:
-      type: string
-phases:
-  - name: build
-    steps:
-      - name: WriteExtravars
-        action: ExecuteBash
-        inputs:
-          commands:
-            - |
-              cat << 'EOF_EXTRAVARS' > /tmp/extravars.json
-              {{ ExtraVars }}
-              EOF_EXTRAVARS
-
-      - name: RunPlaybook
-        action: ExecuteBash
-        inputs:
-          commands:
-            - |
-              ansible-playbook -i localhost, \
-                -e "ansible_connection=local ansible_python_interpreter=/usr/bin/python3" \
-                -e @/tmp/extravars.json \
-                /tmp/playbook.yml
-EOF
+  data     = file("${path.module}/components/run_playbook.yml")
+  tags = {
+    Name        = "AmiComponentRunPlaybook${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
 }
 
 ##############################
@@ -195,7 +147,17 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
   component { component_arn = aws_imagebuilder_component.component_basicpackages.arn }
   component { component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/aws-cli-version-2-linux/1.0.4/1" }
   component { component_arn = aws_imagebuilder_component.component_installansible.arn }
-  component { component_arn = aws_imagebuilder_component.component_downloadplaybook.arn }
+  component {
+    component_arn = aws_imagebuilder_component.downloadplaybook.arn
+    parameter {
+      name  = "S3Bucket"
+      value = local.s3_bucket
+    }
+    parameter {
+      name  = "S3Key"
+      value = local.s3_key
+    }
+  }
   component {
     component_arn = aws_imagebuilder_component.component_runplaybook.arn
     parameter {

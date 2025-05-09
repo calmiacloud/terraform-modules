@@ -1,0 +1,28 @@
+name: AmiComponentRunPlaybook
+schemaVersion: "1.0"
+
+parameters:
+  - ExtraVars:
+      type: string
+
+phases:
+  - name: build
+    steps:
+      - name: WriteExtravars
+        action: ExecuteBash
+        inputs:
+          commands:
+            - |
+              cat << 'EOF_EXTRAVARS' > /tmp/extravars.json
+              {{ ExtraVars }}
+              EOF_EXTRAVARS
+
+      - name: RunPlaybook
+        action: ExecuteBash
+        inputs:
+          commands:
+            - |
+              ansible-playbook -i localhost, \
+                -e "ansible_connection=local ansible_python_interpreter=/usr/bin/python3" \
+                -e @/tmp/extravars.json \
+                /tmp/playbook.yml
