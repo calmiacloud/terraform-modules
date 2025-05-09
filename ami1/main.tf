@@ -221,8 +221,9 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
   }
   component {
     component_arn = aws_imagebuilder_component.component_runplaybook.arn
-    parameters = {
-      ExtraVars = jsonencode(var.ExtraVars)
+    parameter {
+      name  = "ExtraVars"
+      value = jsonencode(var.ExtraVars)
     }
   }
   component {
