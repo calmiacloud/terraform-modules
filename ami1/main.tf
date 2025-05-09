@@ -33,11 +33,11 @@ resource "aws_s3_object" "object" {
 }
 
 ##############################
-# Policies
+# Policies and Instance Profile
 ##############################
 
 resource "aws_iam_policy" "policy_bucket" {
-  name   = "PolicyBucketAmi${random_string.random_id.result}"
+  name   = "PolicyBucketAmi${var.Name}${random_string.random_id.result}"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement: [
@@ -59,7 +59,7 @@ resource "aws_iam_policy" "policy_bucket" {
 }
 
 resource "aws_iam_role" "role_ssm" {
-  name   = "RoleSsmAmi${random_string.random_id.result}"
+  name   = "RoleSsmAmi${var.Name}${random_string.random_id.result}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -79,6 +79,11 @@ resource "aws_iam_role" "role_ssm" {
     Product     = var.Product
     Environment = var.Environment
   }
+}
+
+resource "aws_iam_instance_profile" "instanceprofile_main" {
+  name = "InstanceprofileAmi${var.Name}${random_string.random_id.result}"
+  role = aws_iam_role.role_ssm.name
 }
 
 ##############################
@@ -141,7 +146,6 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
   name         = "AmiRecipe${var.Name}${random_string.random_id.result}"
   version      = "1.0.0"
   parent_image = var.Instance.ParentImage
-
   component { component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/update-linux/1.0.2/1" }
   component { component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/reboot-linux/1.0.1/1" }
   component { component_arn = aws_imagebuilder_component.component_basicpackages.arn }
@@ -170,4 +174,26 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
     Product     = var.Product
     Environment = var.Environment
   }
+}
+
+##############################
+# Infrastructure Block
+##############################
+
+resource "aws_imagebuilder_infrastructure_configuration" "infra_main" {
+  name                 = "AmiInfra${var.Name}${random_string.random_id.result}"
+  instance_profile_name = aws_iam_instance_profile.instanceprofile_main.name
+  instance_types       = [var.Instance.InstanceType]
+  subnet_id            = var.Instance.Subnet
+  security_group_ids   = [var.Instance.SecurityGroup]
+}
+
+##############################
+# Pipeline Block
+##############################
+
+resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
+  name                                = "AmiPipeline${var.Name}${random_string.random_id.result}"
+  image_recipe_arn                    = aws_imagebuilder_image_recipe.recipe_main.arn
+  infrastructure_configuration_arn    = aws_imagebuilder_infrastructure_configuration.infra_main.arn
 }
