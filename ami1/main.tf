@@ -194,14 +194,20 @@ resource "aws_imagebuilder_infrastructure_configuration" "infra_main" {
 resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
   name = "AmiDistribution${var.Name}${random_string.random_id.result}"
   distribution {
+    region = data.aws_region.current.name
     ami_distribution_configuration {
       name        = "Ami${var.Name}${random_string.random_id.result}"
-      tags = {
+      ami_tags = {
         Name        = var.Name
         Product     = var.Product
         Environment = var.Environment
       }
     }
+  }
+  tags = {
+    Name        = var.Name
+    Product     = var.Product
+    Environment = var.Environment
   }
 }
 
