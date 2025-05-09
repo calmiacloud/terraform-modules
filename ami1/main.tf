@@ -89,7 +89,7 @@ resource "aws_imagebuilder_component" "component_basicpackages" {
   name        = "AmiComponentBasicPackages${var.Name}${random_string.random_id.result}"
   version     = "1.0.0"
   platform = "Ubuntu"
-  inline = <<EOF
+  data  = <<EOF
     name: "CustomComponent"
     version: "1.0.0"
     phases:
@@ -107,7 +107,7 @@ resource "aws_imagebuilder_component" "component_ansible" {
   name        = "AmiComponentAnsible${var.Name}${random_string.random_id.result}"
   version     = "1.0.0"
   platform = "Ubuntu"
-  inline = <<EOF
+  data = <<EOF
     name: "CustomComponent"
     version: "1.0.0"
     phases:
@@ -135,7 +135,7 @@ resource "aws_imagebuilder_component" "component_downloadplaybook" {
   name        = "AmiComponentDownloadPlaybook${var.Name}${random_string.random_id.result}"
   version     = "1.0.0"
   platform = "Ubuntu"
-  inline = <<EOF
+  data  = <<EOF
     name: "CustomComponent"
     version: "1.0.0"
     phases:
@@ -153,7 +153,7 @@ resource "aws_imagebuilder_component" "component_runplaybook" {
   name        = "AmiComponentRunPlaybook${var.Name}${random_string.random_id.result}"
   version     = "1.0.0"
   platform = "Ubuntu"
-  inline = <<EOF
+  data  = <<EOF
     name: "CustomComponent"
     version: "1.0.0"
     phases:
