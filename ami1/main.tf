@@ -85,7 +85,7 @@ resource "aws_iam_role" "role_ssm" {
 # Components Block
 ##############################
 
-resource "aws_image_builder_component" "component_basicpackages" {
+resource "aws_imagebuilder_component" "component_basicpackages" {
   name        = "AmiComponentBasicPackages${var.Name}${random_string.random_id.result}"
   version     = "1.0.0"
   platform = "Ubuntu"
@@ -100,7 +100,7 @@ resource "aws_image_builder_component" "component_basicpackages" {
     EOF
 }
 
-resource "aws_image_builder_component" "component_ansible" {
+resource "aws_imagebuilder_component" "component_ansible" {
   name        = "AmiComponentAnsible${var.Name}${random_string.random_id.result}"
   version     = "1.0.0"
   platform = "Ubuntu"
@@ -119,7 +119,7 @@ resource "aws_image_builder_component" "component_ansible" {
     EOF
 }
 
-resource "aws_image_builder_component" "component_downloadplaybook" {
+resource "aws_imagebuilder_component" "component_downloadplaybook" {
   name        = "AmiComponentDownloadPlaybook${var.Name}${random_string.random_id.result}"
   version     = "1.0.0"
   platform = "Ubuntu"
