@@ -84,6 +84,7 @@ resource "aws_iam_role" "role_ssm" {
 ##############################
 # Components Block
 ##############################
+
 resource "aws_imagebuilder_component" "component_basicpackages" {
   name        = "AmiComponentBasicPackages${var.Name}${random_string.random_id.result}"
   version     = "1.0.0"
@@ -137,8 +138,9 @@ phases:
       - name: "DownloadPlaybook"
         action: "S3Download"
         inputs:
-          - source: "s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}"
-            destination: "/tmp/playbook.yml"
+          commands:
+            - source: "s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}"
+              destination: "/tmp/playbook.yml"
 EOF
 }
 
