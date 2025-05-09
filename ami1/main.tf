@@ -113,13 +113,13 @@ schemaVersion: 1.0
 phases:
   - name: build
     steps:
-      - name: ansible-repo
+      - name: Repo
         action: ExecuteBash
         inputs:
           commands:
             - add-apt-repository --yes --update ppa:ansible/ansible
             - apt-get update
-      - name: ansible-install
+      - name: Install
         action: ExecuteBash
         inputs:
           commands:
@@ -136,15 +136,15 @@ name: "AmiComponentDownloadPlaybook${var.Name}${random_string.random_id.result}"
 description: "Descarga el playbook de S3 a /tmp/playbook.yml"
 schemaVersion: 1.0
 phases:
-  build:
+  - name: build
     steps:
-      - name: "DownloadPlaybook"
+      - name: DownloadPlaybook
         action: S3Download
         maxAttempts: 3
         inputs:
-          - source: s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}
-            destination: /tmp/playbook.yml
-            overwrite: true
+          source: "s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}"
+          destination: "/tmp/playbook.yml"
+          overwrite: true
 EOF
 }
 
@@ -161,7 +161,7 @@ resource "aws_imagebuilder_component" "component_runplaybook" {
         type: string
         description: "JSON con las variables extra para el playbook"
     phases:
-      build:
+      - name: build
         steps:
           - name: WriteExtravars
             action: ExecuteBash
@@ -176,12 +176,8 @@ resource "aws_imagebuilder_component" "component_runplaybook" {
             action: ExecuteBash
             inputs:
               commands:
-                - >
-                  ansible-playbook \
-                  -i localhost, \
-                  -e "ansible_connection=local ansible_python_interpreter=/usr/bin/python3" \
-                  -e @/tmp/extravars.json \
-                  /tmp/playbook.yml
+                - |
+                  ansible-playbook -i localhost, -e "ansible_connection=local ansible_python_interpreter=/usr/bin/python3" -e @/tmp/extravars.json /tmp/playbook.yml
 EOF
 }
 
