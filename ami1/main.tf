@@ -89,10 +89,8 @@ resource "aws_imagebuilder_component" "component_basicpackages" {
   name     = "AmiComponentBasicPackages-${var.Name}-${random_string.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
-
   data = <<-EOF
   name: "AmiComponentBasicPackages${var.Name}${random_string.random_id.result}"
-  description: "Instala paquetes básicos (curl, wget, unzip, software-properties-common)"
   schemaVersion: 1.0
 
   phases:
@@ -111,10 +109,8 @@ resource "aws_imagebuilder_component" "component_installansible" {
   name     = "AmiComponentAnsible-${var.Name}-${random_string.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
-
   data = <<-EOF
   name: "AmiComponentAnsible${var.Name}${random_string.random_id.result}"
-  description: "Activa el repositorio de Ansible y lo instala"
   schemaVersion: 1.0
 
   phases:
@@ -140,10 +136,8 @@ resource "aws_imagebuilder_component" "component_downloadplaybook" {
   name     = "AmiComponentDownloadPlaybook-${var.Name}-${random_string.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
-
   data = <<-EOF
   name: "AmiComponentDownloadPlaybook${var.Name}${random_string.random_id.result}"
-  description: "Descarga el playbook de Ansible desde S3"
   schemaVersion: 1.0
 
   phases:
@@ -161,10 +155,8 @@ resource "aws_imagebuilder_component" "component_runplaybook" {
   name     = "AmiComponentRunPlaybook-${var.Name}-${random_string.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
-
   data = <<-EOF
   name: "AmiComponentRunPlaybook${var.Name}${random_string.random_id.result}"
-  description: "Ejecuta el playbook de Ansible en local"
   schemaVersion: 1.0
 
   phases:
