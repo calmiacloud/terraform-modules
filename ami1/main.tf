@@ -189,44 +189,22 @@ EOF
 ##############################
 
 resource "aws_imagebuilder_image_recipe" "recipe_main" {
-  name        = "AmiRecipe${var.Name}${random_string.random_id.result}"
-  version     = "1.0.0"
+  name         = "AmiRecipe${var.Name}${random_string.random_id.result}"
+  version      = "1.0.0"
   parent_image = var.Instance.ParentImage
- # block_device_mapping {
- #   device_name = "/dev/sda1"
- #   delete_on_termination = true
- #   ebs {
- #     volume_size = 8
- #     volume_type = "gp3"
- #   }
- # }
-  component {
-    component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/update-linux/1.0.2/1"
-  }  
-  component {
-    component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/reboot-linux/1.0.1/1"
-  }
-  component {
-    component_arn = aws_imagebuilder_component.component_basicpackages.arn
-  }
-  component {
-    component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/aws-cli-version-2-linux/1.0.4/1"
-  }
-  component {
-    component_arn = aws_imagebuilder_component.component_installansible.arn
-  }
-  component {
-    component_arn = aws_imagebuilder_component.component_downloadplaybook.arn
-  }
+
+  component { component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/update-linux/1.0.2/1" }
+  component { component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/reboot-linux/1.0.1/1" }
+  component { component_arn = aws_imagebuilder_component.component_basicpackages.arn }
+  component { component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/aws-cli-version-2-linux/1.0.4/1" }
+  component { component_arn = aws_imagebuilder_component.component_installansible.arn }
+  component { component_arn = aws_imagebuilder_component.component_downloadplaybook.arn }
   component {
     component_arn = aws_imagebuilder_component.component_runplaybook.arn
     parameter {
       name  = "ExtraVars"
       value = jsonencode(var.ExtraVars)
     }
-  }
-  component {
-    component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/reboot-linux/1.0.1/1"
   }
   tags = {
     Name        = "AmiRecipe${var.Name}"
