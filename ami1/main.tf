@@ -149,36 +149,39 @@ EOF
 }
 
 resource "aws_imagebuilder_component" "component_runplaybook" {
-  name     = "AmiComponentRunPlaybook-${var.Name}-${random_string.random_id.result}"
-  version  = "1.0.0"
-  platform = "Linux"
-  data = <<EOF
-name: run-playbook-with-extravars
-schemaVersion: 1.0
-parameters:
-  - name: ExtraVars
-    type: string
-    description: "JSON con las variables extra para el playbook"
-phases:
-  build:
-    steps:
-      - name: "WriteExtravars"
-        action: ExecuteBash
-        inputs:
-          commands:
-            - |
-              cat << 'EOF' > /tmp/extravars.json
-              {{ ExtraVars }}
-              EOF
-      - name: "RunPlaybook"
-        action: ExecuteBash
-        inputs:
-          commands:
-            - ansible-playbook \
-                -i localhost, \
-                -e 'ansible_connection=local ansible_python_interpreter=/usr/bin/python3' \
-                -e @/tmp/extravars.json \
-                /tmp/playbook.yml
+  name            = "AmiComponentRunPlaybook-${var.Name}-${random_string.random_id.result}"
+  version         = "1.0.0"
+  platform        = "Linux"
+  data = <<-EOF
+    name: run-playbook-with-extravars
+    description: "Vuelca ExtraVars en /tmp/extravars.json y ejecuta el playbook"
+    schemaVersion: '1.0'
+    parameters:
+      - name: ExtraVars
+        type: string
+        description: "JSON con las variables extra para el playbook"
+    phases:
+      build:
+        steps:
+          - name: WriteExtravars
+            action: ExecuteBash
+            inputs:
+              commands:
+                - |
+                  cat << 'EOF_EXTRAVARS' > /tmp/extravars.json
+                  {{ ExtraVars }}
+                  EOF_EXTRAVARS
+
+          - name: RunPlaybook
+            action: ExecuteBash
+            inputs:
+              commands:
+                - >
+                  ansible-playbook \
+                  -i localhost, \
+                  -e "ansible_connection=local ansible_python_interpreter=/usr/bin/python3" \
+                  -e @/tmp/extravars.json \
+                  /tmp/playbook.yml
 EOF
 }
 
