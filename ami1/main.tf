@@ -202,6 +202,12 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
   component {
     component_arn = aws_image_builder_component.component_downloadplaybook.arn
   }
+  component {
+    component_arn = aws_image_builder_component.component_runplaybook.arn
+  }
+  component {
+    component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/reboot-linux/1.0.1/1"
+  }
   tags = {
     Name        = "AmiRecipe${var.Name}"
     Product     = var.Product
