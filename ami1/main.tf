@@ -92,9 +92,8 @@ resource "aws_imagebuilder_component" "component_basicpackages" {
 
   data = <<EOF
 name: "AmiComponentBasicPackages${var.Name}${random_string.random_id.result}"
-description: "Instala paquetes básicos: curl, wget, unzip y software-properties-common"
+description: "Instala paquetes básicos (curl, wget, unzip, software-properties-common)"
 schemaVersion: 1.0
-
 phases:
   build:
     steps:
@@ -114,9 +113,8 @@ resource "aws_imagebuilder_component" "component_installansible" {
 
   data = <<EOF
 name: "AmiComponentAnsible${var.Name}${random_string.random_id.result}"
-description: "Añade el PPA de Ansible y lo instala"
+description: "Activa repositorio de Ansible e instala Ansible"
 schemaVersion: 1.0
-
 phases:
   build:
     steps:
@@ -143,17 +141,16 @@ resource "aws_imagebuilder_component" "component_downloadplaybook" {
 
   data = <<EOF
 name: "AmiComponentDownloadPlaybook${var.Name}${random_string.random_id.result}"
-description: "Descarga el playbook de S3"
+description: "Descarga el playbook de S3 a /tmp/playbook.yml"
 schemaVersion: 1.0
-
 phases:
   build:
     steps:
       - name: "DownloadPlaybook"
         action: "S3Download"
         inputs:
-          source: "s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}"
-          destination: "/tmp/playbook.yml"
+          - source: "s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}"
+            destination: "/tmp/playbook.yml"
 EOF
 }
 
@@ -164,9 +161,8 @@ resource "aws_imagebuilder_component" "component_runplaybook" {
 
   data = <<EOF
 name: "AmiComponentRunPlaybook${var.Name}${random_string.random_id.result}"
-description: "Ejecuta el playbook de Ansible en local"
+description: "Ejecuta el playbook con variables extra"
 schemaVersion: 1.0
-
 phases:
   build:
     steps:
@@ -175,7 +171,9 @@ phases:
         inputs:
           commands:
             - "echo '${jsonencode(var.ExtraVars)}' > /tmp/extravars.json"
-            - "ansible-playbook -i localhost, -e 'ansible_connection=local ansible_python_interpreter=/usr/bin/python3' -e @/tmp/extravars.json /tmp/playbook.yml"
+            - "ansible-playbook -i localhost, \
+-e 'ansible_connection=local ansible_python_interpreter=/usr/bin/python3' \
+-e @/tmp/extravars.json /tmp/playbook.yml"
 EOF
 }
 
