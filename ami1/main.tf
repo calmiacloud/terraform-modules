@@ -86,79 +86,97 @@ resource "aws_iam_role" "role_ssm" {
 ##############################
 
 resource "aws_imagebuilder_component" "component_basicpackages" {
-  name        = "AmiComponentBasicPackages${var.Name}${random_string.random_id.result}"
-  version     = "1.0.0"
-  platform    = "Linux"
-  data        = <<EOF
-phases:
-  build:
-    commands:
-      - name: "InstallPackages"
-        action: "ExecuteBash"
-        inputs:
-          commands:
-            - "sudo apt-get install curl wget unzip software-properties-common -y"
-EOF
+  name     = "AmiComponentBasicPackages-${var.Name}-${random_string.random_id.result}"
+  version  = "1.0.0"
+  platform = "Linux"
+
+  data = <<-EOF
+  name: "AmiComponentBasicPackages${var.Name}${random_string.random_id.result}"
+  description: "Instala paquetes básicos (curl, wget, unzip, software-properties-common)"
+  schemaVersion: 1.0
+
+  phases:
+    build:
+      commands:
+        - name: "InstallPackages"
+          action: "ExecuteBash"
+          inputs:
+            commands:
+              - "sudo apt-get update -y"
+              - "sudo apt-get install -y curl wget unzip software-properties-common"
+  EOF
 }
 
 resource "aws_imagebuilder_component" "component_installansible" {
-  name        = "AmiComponentAnsible${var.Name}${random_string.random_id.result}"
-  version     = "1.0.0"
-  platform    = "Linux"
-  data        = <<EOF
-phases:
-  build:
-    commands:
-      - name: "EnableRepo"
-        action: "ExecuteBash"
-        inputs:
-          commands:
-            - "sudo add-apt-repository --yes ppa:ansible/ansible"
-      - name: "Update"
-        action: "ExecuteBash"
-        inputs:
-          commands:
-            - "sudo apt-get update -y"
-      - name: "Install Ansible"
-        action: "ExecuteBash"
-        inputs:
-          commands:
-            - "sudo apt-get install -y ansible"
-EOF
+  name     = "AmiComponentAnsible-${var.Name}-${random_string.random_id.result}"
+  version  = "1.0.0"
+  platform = "Linux"
+
+  data = <<-EOF
+  name: "AmiComponentAnsible${var.Name}${random_string.random_id.result}"
+  description: "Activa el repositorio de Ansible y lo instala"
+  schemaVersion: 1.0
+
+  phases:
+    build:
+      commands:
+        - name: "EnableRepo"
+          action: "ExecuteBash"
+          inputs:
+            commands:
+              - "sudo apt-get update -y"
+              - "sudo apt-get install -y software-properties-common"
+              - "sudo add-apt-repository --yes ppa:ansible/ansible"
+        - name: "InstallAnsible"
+          action: "ExecuteBash"
+          inputs:
+            commands:
+              - "sudo apt-get update -y"
+              - "sudo apt-get install -y ansible"
+  EOF
 }
 
 resource "aws_imagebuilder_component" "component_downloadplaybook" {
-  name        = "AmiComponentDownloadPlaybook${var.Name}${random_string.random_id.result}"
-  version     = "1.0.0"
-  platform    = "Linux"
-  data        = <<EOF
-phases:
-  build:
-    commands:
-      - name: "DownloadPlaybook"
-        action: "S3Download"
-        inputs:
-          commands:
+  name     = "AmiComponentDownloadPlaybook-${var.Name}-${random_string.random_id.result}"
+  version  = "1.0.0"
+  platform = "Linux"
+
+  data = <<-EOF
+  name: "AmiComponentDownloadPlaybook${var.Name}${random_string.random_id.result}"
+  description: "Descarga el playbook de Ansible desde S3"
+  schemaVersion: 1.0
+
+  phases:
+    build:
+      commands:
+        - name: "DownloadPlaybook"
+          action: "S3Download"
+          inputs:
             - source: "s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}"
               destination: "/tmp/playbook.yml"
-EOF
+  EOF
 }
 
 resource "aws_imagebuilder_component" "component_runplaybook" {
-  name        = "AmiComponentRunPlaybook${var.Name}${random_string.random_id.result}"
-  version     = "1.0.0"
-  platform    = "Linux"
-  data        = <<EOF
-phases:
-  build:
-    commands:
-      - name: "Run Playbook"
-        action: "ExecuteBash"
-        inputs:
-          commands:
-            - "echo '${jsonencode(var.ExtraVars)}' > /tmp/extravars.json"
-            - "ansible-playbook -i localhost, -e 'ansible_connection=local ansible_python_interpreter=/usr/bin/python3' -e @/tmp/extravars.json /tmp/playbook.yml"
-EOF
+  name     = "AmiComponentRunPlaybook-${var.Name}-${random_string.random_id.result}"
+  version  = "1.0.0"
+  platform = "Linux"
+
+  data = <<-EOF
+  name: "AmiComponentRunPlaybook${var.Name}${random_string.random_id.result}"
+  description: "Ejecuta el playbook de Ansible en local"
+  schemaVersion: 1.0
+
+  phases:
+    build:
+      commands:
+        - name: "RunPlaybook"
+          action: "ExecuteBash"
+          inputs:
+            commands:
+              - "echo '${jsonencode(var.ExtraVars)}' > /tmp/extravars.json"
+              - "ansible-playbook -i localhost, -e 'ansible_connection=local ansible_python_interpreter=/usr/bin/python3' -e @/tmp/extravars.json /tmp/playbook.yml"
+  EOF
 }
 
 ##############################
