@@ -90,7 +90,7 @@ resource "aws_imagebuilder_component" "component_basicpackages" {
   version  = "1.0.0"
   platform = "Linux"
   data = <<EOF
-name: apt-basic-packages
+name: AmiComponentBasicPackages
 schemaVersion: 1.0
 phases:
   - name: build
@@ -108,7 +108,7 @@ resource "aws_imagebuilder_component" "component_installansible" {
   version  = "1.0.0"
   platform = "Linux"
   data = <<EOF
-name: apt-install-ansible
+name: AmiComponentAnsible
 schemaVersion: 1.0
 phases:
   - name: build
@@ -132,8 +132,7 @@ resource "aws_imagebuilder_component" "component_downloadplaybook" {
   version  = "1.0.0"
   platform = "Linux"
   data = <<EOF
-name: "AmiComponentDownloadPlaybook${var.Name}${random_string.random_id.result}"
-description: "Descarga el playbook de S3 a /tmp/playbook.yml"
+name: "AmiComponentDownloadPlaybook"
 schemaVersion: 1.0
 phases:
   - name: build
@@ -153,13 +152,11 @@ resource "aws_imagebuilder_component" "component_runplaybook" {
   version  = "1.0.0"
   platform = "Linux"
   data = <<-EOF
-name: run-playbook-with-extravars
-description: "Vuelca ExtraVars en /tmp/extravars.json y ejecuta el playbook"
+name: AmiComponentRunPlaybook
 schemaVersion: "1.0"
 parameters:
   - ExtraVars:
       type: string
-      description: "JSON con las variables extra para el playbook"
 phases:
   - name: build
     steps:
