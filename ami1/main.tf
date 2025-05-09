@@ -142,9 +142,9 @@ phases:
         action: S3Download
         maxAttempts: 3
         inputs:
-          source: "s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}"
-          destination: "/tmp/playbook.yml"
-          overwrite: true
+          - source: "s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}"
+            destination: "/tmp/playbook.yml"
+            overwrite: true
 EOF
 }
 
@@ -177,7 +177,10 @@ resource "aws_imagebuilder_component" "component_runplaybook" {
             inputs:
               commands:
                 - |
-                  ansible-playbook -i localhost, -e "ansible_connection=local ansible_python_interpreter=/usr/bin/python3" -e @/tmp/extravars.json /tmp/playbook.yml
+                  ansible-playbook -i localhost, \
+                    -e "ansible_connection=local ansible_python_interpreter=/usr/bin/python3" \
+                    -e @/tmp/extravars.json \
+                    /tmp/playbook.yml
 EOF
 }
 
