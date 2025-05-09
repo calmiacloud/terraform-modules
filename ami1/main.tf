@@ -85,7 +85,7 @@ resource "aws_iam_role" "role_ssm" {
 # Ssm Document
 ##############################
 
-resource "aws_image_builder_image_recipe" "example_recipe" {
+resource "aws_image_builder_image_recipe" "recipe_main" {
   name        = "AmiRecipe${var.Name}${random_string.random_id.result}"
   parent_image = var.Instance.ParentImage
   block_device_mappings {
@@ -95,3 +95,4 @@ resource "aws_image_builder_image_recipe" "example_recipe" {
       volume_type = "gp3"
     }
   }
+}
