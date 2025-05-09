@@ -82,49 +82,16 @@ resource "aws_iam_role" "role_ssm" {
 }
 
 ##############################
-# RESTO
+# Ssm Document
 ##############################
 
 resource "aws_image_builder_image_recipe" "example_recipe" {
-  name        = "example-recipe"
-  description = "Example Image Recipe"
-  parent_image = "ami-0abcdef1234567890"  # Imagen base
+  name        = "AmiRecipe${var.Name}${random_string.random_id.result}"
+  parent_image = var.Instance.ParentImage
   block_device_mappings {
     device_name = "/dev/sda1"
     ebs {
-      volume_size = 30  # Tamaño del disco
-      volume_type = "gp2"
+      volume_size = 8
+      volume_type = "gp3"
     }
   }
-
-  components {
-    component {
-      component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/amazon-linux-2/1.0.0"
-    }
-    # Aquí puedes añadir más componentes si es necesario
-  }
-}
-
-resource "aws_image_builder_infrastructure_configuration" "example_infrastructure" {
-  name                = "example-infrastructure"
-  instance_profile_name = "EC2InstanceProfile"  # Perfil de la instancia
-  instance_type       = "t3.micro"  # Tipo de instancia
-}
-
-resource "aws_image_builder_image_pipeline" "example_pipeline" {
-  name        = "example-pipeline"
-  image_recipe_arn                    = aws_image_builder_image_recipe.example_recipe.arn
-  infrastructure_configuration_arn     = aws_image_builder_infrastructure_configuration.example_infrastructure.arn
-  status = "ENABLED"
-  build {
-    workflow {
-      arn = "arn:aws:imagebuilder:eu-south-2:aws:workflow/build/build-image/1.0.2"
-    }
-  }
-}
-
-resource "aws_image_builder_image" "example_image" {
-  image_recipe_arn                = aws_image_builder_image_recipe.example_recipe.arn
-  infrastructure_configuration_arn = aws_image_builder_infrastructure_configuration.example_infrastructure.arn
-  pipeline_arn                    = aws_image_builder_image_pipeline.example_pipeline.arn
-}
