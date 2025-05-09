@@ -89,20 +89,19 @@ resource "aws_imagebuilder_component" "component_basicpackages" {
   name     = "AmiComponentBasicPackages-${var.Name}-${random_string.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
-
   data = <<EOF
-name: "AmiComponentBasicPackages${var.Name}${random_string.random_id.result}"
-description: "Instala paquetes básicos (curl, wget, unzip, software-properties-common)"
+name: apt-update-upgrade
 schemaVersion: 1.0
+
 phases:
-  build:
+  - name: build
     steps:
-      - name: "InstallPackages"
-        action: "ExecuteBash"
+      - name: update-packages
+        action: ExecuteBash
         inputs:
           commands:
-            - "sudo apt-get update -y"
-            - "sudo apt-get install -y curl wget unzip software-properties-common"
+            - apt-get update -y
+            - apt-get upgrade -y
 EOF
 }
 
