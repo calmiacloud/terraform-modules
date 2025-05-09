@@ -90,18 +90,17 @@ resource "aws_imagebuilder_component" "component_basicpackages" {
   version  = "1.0.0"
   platform = "Linux"
   data = <<EOF
-name: apt-update-upgrade
+name: apt-basic-packages
 schemaVersion: 1.0
 
 phases:
   - name: build
     steps:
-      - name: update-packages
+      - name: basic-packages
         action: ExecuteBash
         inputs:
           commands:
-            - apt-get update -y
-            - apt-get upgrade -y
+            - sudo apt-get install -y curl wget unzip software-properties-common
 EOF
 }
 
@@ -109,27 +108,24 @@ resource "aws_imagebuilder_component" "component_installansible" {
   name     = "AmiComponentAnsible-${var.Name}-${random_string.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
-
   data = <<EOF
-name: "AmiComponentAnsible${var.Name}${random_string.random_id.result}"
-description: "Activa repositorio de Ansible e instala Ansible"
+name: apt-install-ansible
 schemaVersion: 1.0
+
 phases:
-  build:
+  - name: build
     steps:
-      - name: "EnableRepo"
-        action: "ExecuteBash"
+      - name: ansible-repo
+        action: ExecuteBash
         inputs:
           commands:
-            - "sudo apt-get update -y"
-            - "sudo apt-get install -y software-properties-common"
-            - "sudo add-apt-repository --yes ppa:ansible/ansible"
-      - name: "InstallAnsible"
-        action: "ExecuteBash"
+            - add-apt-repository --yes --update ppa:ansible/ansible
+            - apt-get update
+      - name: ansible-install
+        action: ExecuteBash
         inputs:
           commands:
-            - "sudo apt-get update -y"
-            - "sudo apt-get install -y ansible"
+            - apt-get install -y ansible
 EOF
 }
 
@@ -137,7 +133,6 @@ resource "aws_imagebuilder_component" "component_downloadplaybook" {
   name     = "AmiComponentDownloadPlaybook-${var.Name}-${random_string.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
-
   data = <<EOF
 name: "AmiComponentDownloadPlaybook${var.Name}${random_string.random_id.result}"
 description: "Descarga el playbook de S3 a /tmp/playbook.yml"
@@ -146,10 +141,12 @@ phases:
   build:
     steps:
       - name: "DownloadPlaybook"
-        action: "S3Download"
+        action: S3Download
+        maxAttempts: 3
         inputs:
-          - source: "s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}"
-            destination: "/tmp/playbook.yml"
+          - source: s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}
+            destination: /tmp/playbook.yml
+            overwrite: true
 EOF
 }
 
@@ -157,25 +154,36 @@ resource "aws_imagebuilder_component" "component_runplaybook" {
   name     = "AmiComponentRunPlaybook-${var.Name}-${random_string.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
-
   data = <<EOF
-name: "AmiComponentRunPlaybook${var.Name}${random_string.random_id.result}"
-description: "Ejecuta el playbook con variables extra"
+name: run-playbook-with-extravars
 schemaVersion: 1.0
+
+parameters:
+  - name: ExtraVars
+    type: string
+
 phases:
-  build:
+  - name: build
     steps:
-      - name: "RunPlaybook"
-        action: "ExecuteBash"
+      - name: write-extravars
+        action: ExecuteBash
         inputs:
           commands:
-            - "echo '${jsonencode(var.ExtraVars)}' > /tmp/extravars.json"
-            - "ansible-playbook -i localhost, \
--e 'ansible_connection=local ansible_python_interpreter=/usr/bin/python3' \
--e @/tmp/extravars.json /tmp/playbook.yml"
+            - |
+              cat << 'EOF' > /tmp/extravars.json
+              {{ ExtraVars }}
+              EOF
+      - name: run-playbook
+        action: ExecuteBash
+        inputs:
+          commands:
+            - ansible-playbook \
+                -i localhost, \
+                -e 'ansible_connection=local ansible_python_interpreter=/usr/bin/python3' \
+                -e @/tmp/extravars.json \
+                /tmp/playbook.yml
 EOF
 }
-
 
 ##############################
 # Recipe Block
