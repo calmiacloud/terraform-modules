@@ -84,88 +84,87 @@ resource "aws_iam_role" "role_ssm" {
 ##############################
 # Components Block
 ##############################
-
 resource "aws_imagebuilder_component" "component_basicpackages" {
   name        = "AmiComponentBasicPackages${var.Name}${random_string.random_id.result}"
   version     = "1.0.0"
-  platform = "Linux"
-  data  = <<EOF
-    name: "CustomComponent"
-    version: "1.0.0"
-    phases:
-    build:
-        commands:
-          - name: InstallPackages
-          action: ExecuteBash
-          inputs:
-            commands:
-            - sudo apt-get install curl wget unzip software-properties-common -y
-    EOF
+  platform    = "Linux"
+  data = <<EOF
+name: "CustomComponent"
+version: "1.0.0"
+phases:
+  build:
+    commands:
+      - name: "InstallPackages"
+        action: "ExecuteBash"
+        inputs:
+          commands:
+            - "sudo apt-get install curl wget unzip software-properties-common -y"
+EOF
 }
 
-resource "aws_imagebuilder_component" "component_ansible" {
+resource "aws_imagebuilder_component" "component_installansible" {
   name        = "AmiComponentAnsible${var.Name}${random_string.random_id.result}"
   version     = "1.0.0"
-  platform = "Linux"
+  platform    = "Linux"
   data = <<EOF
-    name: "CustomComponent"
-    version: "1.0.0"
-    phases:
-    build:
-        commands:
-          - name: EnableRepo
-          action: ExecuteBash
-          inputs:
-            commands:
-            - sudo add-apt-repository --yes ppa:ansible/ansible   
-          - name: Update
-          action: ExecuteBash
-          inputs:
-            commands:
-            - sudo apt-get update -y
-          - name: Update
-          action: ExecuteBash
-          inputs:
-            commands:
-            - sudo apt-get install -y ansible
-    EOF
+name: "CustomComponent"
+version: "1.0.0"
+phases:
+  build:
+    commands:
+      - name: "EnableRepo"
+        action: "ExecuteBash"
+        inputs:
+          commands:
+            - "sudo add-apt-repository --yes ppa:ansible/ansible"
+      - name: "Update"
+        action: "ExecuteBash"
+        inputs:
+          commands:
+            - "sudo apt-get update -y"
+      - name: "Install Ansible"
+        action: "ExecuteBash"
+        inputs:
+          commands:
+            - "sudo apt-get install -y ansible"
+EOF
 }
 
 resource "aws_imagebuilder_component" "component_downloadplaybook" {
   name        = "AmiComponentDownloadPlaybook${var.Name}${random_string.random_id.result}"
   version     = "1.0.0"
-  platform = "Linux"
-  data  = <<EOF
-    name: "CustomComponent"
-    version: "1.0.0"
-    phases:
-    build:
-        commands:
-        - name: "DownloadPlaybook"
-            action: S3Download
-            inputs:
-            - source: "s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}"
-              destination: "/tmp/playbook.yml"
-    EOF
+  platform    = "Linux"
+  data        = <<EOF
+name: "CustomComponent"
+version: "1.0.0"
+phases:
+  build:
+    commands:
+      - name: "DownloadPlaybook"
+        action: "S3Download"
+        inputs:
+          - source: "s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}"
+            destination: "/tmp/playbook.yml"
+EOF
 }
 
 resource "aws_imagebuilder_component" "component_runplaybook" {
   name        = "AmiComponentRunPlaybook${var.Name}${random_string.random_id.result}"
   version     = "1.0.0"
-  platform = "Linux"
-  data  = <<EOF
-    name: "CustomComponent"
-    version: "1.0.0"
-    phases:
-    build:
-        commands:
-        - name: "Run Playbook"
-            action: ExecuteBash
-            inputs:
-              commands:
-              - echo '${jsonencode(var.ExtraVars)}' > /tmp/extravars.json
-              - ansible-playbook -i localhost, -e 'ansible_connection=local ansible_python_interpreter=/usr/bin/python3' -e @/tmp/extravars.json /tmp/playbook.yml
-    EOF
+  platform    = "Linux"
+  data        = <<EOF
+name: "CustomComponent"
+version: "1.0.0"
+phases:
+  build:
+    commands:
+      - name: "Run Playbook"
+        action: "ExecuteBash"
+        inputs:
+          commands:
+            - "echo '${jsonencode(var.ExtraVars)}' > /tmp/extravars.json"
+            - "ansible-playbook -i localhost, -e 'ansible_connection=local ansible_python_interpreter=/usr/bin/python3' -e @/tmp/extravars.json /tmp/playbook.yml"
+EOF
 }
 
 ##############################
@@ -197,7 +196,7 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
     component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/aws-cli-version-2-linux/1.0.4/1"
   }
   component {
-    component_arn = aws_imagebuilder_component.component_ansible.arn
+    component_arn = aws_imagebuilder_component.component_installansible.arn
   }
   component {
     component_arn = aws_imagebuilder_component.component_downloadplaybook.arn
