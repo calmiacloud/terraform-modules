@@ -148,7 +148,7 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
   component { component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/aws-cli-version-2-linux/1.0.4/1" }
   component { component_arn = aws_imagebuilder_component.component_installansible.arn }
   component {
-    component_arn = aws_imagebuilder_component.downloadplaybook.arn
+    component_arn = aws_imagebuilder_component.component_downloadplaybook.arn
     parameter {
       name  = "S3Bucket"
       value = local.s3_bucket
