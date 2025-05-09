@@ -150,10 +150,8 @@ EOF
 
 resource "aws_imagebuilder_component" "component_runplaybook" {
   name             = "AmiComponentRunPlaybook-${var.Name}-${random_string.random_id.result}"
-  semantic_version = "1.0.0"
-  platform         = "Linux"
-  type             = "BUILD"
-
+  version  = "1.0.0"
+  platform = "Linux"
   data = <<-EOF
 name: run-playbook-with-extravars
 description: "Vuelca ExtraVars en /tmp/extravars.json y ejecuta el playbook"
