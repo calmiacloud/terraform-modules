@@ -112,7 +112,7 @@ resource "aws_imagebuilder_component" "component_ansible" {
         commands:
         - name: "Enable Repo"
             command: "sudo add-apt-repository --yes ppa:ansible/ansible"
-        - name: "InstallPackages"
+        - name: "Update"
             command: "sudo apt-get update -y"
         - name: "InstallPackages"
             command: "sudo apt-get install -y ansible"
