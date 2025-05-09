@@ -151,11 +151,11 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
     component_arn = aws_imagebuilder_component.component_downloadplaybook.arn
     parameter {
       name  = "S3Bucket"
-      value = local.s3_bucket
+      value = aws_s3_bucket.bucket.bucket
     }
     parameter {
       name  = "S3Key"
-      value = local.s3_key
+      value = aws_s3_object.object.key
     }
   }
   component {
