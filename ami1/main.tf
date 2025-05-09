@@ -95,8 +95,11 @@ resource "aws_imagebuilder_component" "component_basicpackages" {
     phases:
     build:
         commands:
-        - name: "InstallPackages"
-            command: "sudo apt-get install curl wget unzip software-properties-common -y"
+          - name: InstallPackages
+          action: ExecuteBash
+          inputs:
+            commands:
+            - sudo apt-get install curl wget unzip software-properties-common -y
     EOF
 }
 
@@ -110,12 +113,21 @@ resource "aws_imagebuilder_component" "component_ansible" {
     phases:
     build:
         commands:
-        - name: "Enable Repo"
-            command: "sudo add-apt-repository --yes ppa:ansible/ansible"
-        - name: "Update"
-            command: "sudo apt-get update -y"
-        - name: "InstallPackages"
-            command: "sudo apt-get install -y ansible"
+          - name: EnableRepo
+          action: ExecuteBash
+          inputs:
+            commands:
+            - sudo add-apt-repository --yes ppa:ansible/ansible   
+          - name: Update
+          action: ExecuteBash
+          inputs:
+            commands:
+            - sudo apt-get update -y
+          - name: Update
+          action: ExecuteBash
+          inputs:
+            commands:
+            - sudo apt-get install -y ansible
     EOF
 }
 
@@ -133,7 +145,26 @@ resource "aws_imagebuilder_component" "component_downloadplaybook" {
             action: S3Download
             inputs:
             - source: "s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key}"
-                destination: "/tmp/playbook.yml"
+              destination: "/tmp/playbook.yml"
+    EOF
+}
+
+resource "aws_imagebuilder_component" "component_runplaybook" {
+  name        = "AmiComponentRunPlaybook${var.Name}${random_string.random_id.result}"
+  version     = "1.0.0"
+  platform = "Ubuntu"
+  inline = <<EOF
+    name: "CustomComponent"
+    version: "1.0.0"
+    phases:
+    build:
+        commands:
+        - name: "Run Playbook"
+            action: ExecuteBash
+            inputs:
+              commands:
+              - echo '${jsonencode(var.ExtraVars)}' > /tmp/extravars.json
+              - ansible-playbook -i localhost, -e 'ansible_connection=local ansible_python_interpreter=/usr/bin/python3' -e @/tmp/extravars.json /tmp/playbook.yml
     EOF
 }
 
