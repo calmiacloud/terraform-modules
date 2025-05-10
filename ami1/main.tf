@@ -126,13 +126,13 @@ resource "aws_imagebuilder_component" "component_downloadplaybook" {
   }
 }
 
-resource "aws_imagebuilder_component" "component_runplaybook" {
-  name             = "AmiComponentRunPlaybook${var.Name}${random_string.random_id.result}"
+resource "aws_imagebuilder_component" "component_runplaybookreboot" {
+  name             = "AmiComponentRunPlaybookReboot${var.Name}${random_string.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
-  data     = file("${path.module}/components/run_playbook.yml")
+  data     = file("${path.module}/components/run_playbook_reboot.yml")
   tags = {
-    Name        = "AmiComponentRunPlaybook${var.Name}"
+    Name        = "AmiComponentRunPlaybookReboot${var.Name}"
     Product     = var.Product
     Environment = var.Environment
   }
@@ -161,7 +161,7 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
     }
   }
   component {
-    component_arn = aws_imagebuilder_component.component_runplaybook.arn
+    component_arn = aws_imagebuilder_component.component_runplaybookreboot.arn
     parameter {
       name  = "ExtraVars"
       value = jsonencode(var.ExtraVars)

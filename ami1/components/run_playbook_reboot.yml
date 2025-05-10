@@ -1,4 +1,4 @@
-name: AmiComponentRunPlaybook
+name: AmiComponentRunPlaybookReboot
 schemaVersion: "1.0"
 
 parameters:
