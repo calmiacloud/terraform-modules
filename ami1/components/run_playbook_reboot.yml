@@ -22,10 +22,13 @@ phases:
         inputs:
           commands:
             - |
-              ansible-playbook -i localhost, \
-                -e "ansible_connection=local ansible_python_interpreter=/usr/bin/python3" \
-                -e @/tmp/extravars.json \
-                /tmp/playbook.yml
+                ansible-playbook \
+                  -i localhost, \
+                  -c local \
+                  -e 'ansible_python_interpreter=/usr/bin/python3' \
+                  -vvv \
+                  -e @/tmp/extravars.json \
+                  /tmp/playbook.yml
       - name: Reboot
         action: Reboot
         onFailure: Abort
