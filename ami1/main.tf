@@ -255,6 +255,13 @@ resource "null_resource" "resource_main" {
         --filters "Name=tag:Name,Values=${var.Name}" "Name=state,Values=available" \
         --query 'Images[*].ImageId' --output text) || exit 1
 
+      DESCRIBE_AMIS=$(aws ec2 describe-images \
+        --filters \
+          "Name=name,Values=Ami${var.Name}${random_string.random_id.result}-*" \
+          "Name=state,Values=available" \
+        --query 'Images[*].ImageId' \
+        --output text) || exit 1
+
       if [ -n "$DESCRIBE_AMIS" ]; then
         for ami in $DESCRIBE_AMIS; do
           echo ""
@@ -296,7 +303,7 @@ resource "null_resource" "resource_main" {
 
       while true; do
         PIPELINE_STATUS=$(aws imagebuilder get-image \
-          --image-build-version-arn $exec_arn \
+          --image-build-version-arn $PIPELINE \
           --region ${data.aws_region.current.name} \
           --query 'image.state.status' --output text)
         echo "  • Estado actual: $PIPELINE_STATUS"
