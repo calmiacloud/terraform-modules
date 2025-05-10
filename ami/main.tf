@@ -284,10 +284,6 @@ resource "null_resource" "resource_main" {
       echo ""
 
       DESCRIBE_AMIS=$(aws ec2 describe-images \
-        --filters "Name=tag:Name,Values=${var.Name}" "Name=state,Values=available" \
-        --query 'Images[*].ImageId' --output text) || exit 1
-
-      DESCRIBE_AMIS=$(aws ec2 describe-images \
         --filters \
           "Name=name,Values=Ami${var.Name}${random_string.random_id.result}-*" \
           "Name=state,Values=available" \
@@ -299,7 +295,17 @@ resource "null_resource" "resource_main" {
           echo ""
           echo -e "\e[33m ==> Ami found with name $ami, DELETING\e[0m"
           echo ""
+
+          IMAGE_RESOURCE_ARN=$(aws ec2 describe-images \
+            --image-ids "$ami" \
+            --query "Images[0].Tags[?Key=='Ec2ImageBuilderArn'].Value[]" \
+            --output text) || exit 1
+
+          aws imagebuilder delete-image \
+            --image-build-version-arn "$IMAGE_RESOURCE_ARN" || exit 1
+
           aws ec2 deregister-image --image-id "$ami"
+          
           DESCRIBE_IMAGES=$(aws ec2 describe-images \
             --image-ids "$ami" \
             --query 'Images[0].BlockDeviceMappings[*].Ebs.SnapshotId' \
@@ -365,4 +371,3 @@ resource "null_resource" "resource_main" {
     EOT
   }
 }
-

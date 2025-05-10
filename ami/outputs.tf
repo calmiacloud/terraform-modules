@@ -1,7 +1,7 @@
-output "arn" {
+output "Arn" {
   value       = data.aws_ami.data_ami.arn
 }
 
-output "name" {
+output "Name" {
   value       = data.aws_ami.data_ami.name
 }
