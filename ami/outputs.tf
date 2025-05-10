@@ -1,3 +1,7 @@
-#output "id" {
-#  value  = data.data_ami.generated_ami.id
-#}
+output "arn" {
+  value       = data.aws_ami.data_ami.arn
+}
+
+output "name" {
+  value       = data.aws_ami.data_ami.name
+}

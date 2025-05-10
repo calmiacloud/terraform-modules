@@ -21,7 +21,6 @@ variable "Instance" {
     KeyPair        = string
     Subnet         = string
     SecurityGroup  = string
-
   })
 }
 

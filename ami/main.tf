@@ -33,11 +33,11 @@ resource "aws_s3_object" "object" {
 }
 
 ##############################
-# Policies
+# Policies and Instance Profile
 ##############################
 
 resource "aws_iam_policy" "policy_bucket" {
-  name   = "PolicyBucketAmi${random_string.random_id.result}"
+  name   = "PolicyBucketAmi${var.Name}${random_string.random_id.result}"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement: [
@@ -58,8 +58,40 @@ resource "aws_iam_policy" "policy_bucket" {
   }
 }
 
+
+resource "aws_iam_role_policy" "policy_imagebuilder" {
+  name = "AllowImageBuilderGetComponents"
+  role = aws_iam_role.role_ssm.name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "imagebuilder:GetComponent",
+          "imagebuilder:GetComponentPolicy",
+          "imagebuilder:GetImageRecipe",
+          "imagebuilder:GetImageRecipePolicy",
+          "imagebuilder:GetInfrastructureConfiguration",
+          "imagebuilder:GetDistributionConfiguration",
+          "imagebuilder:GetImage"
+        ]
+        Resource = [
+          aws_imagebuilder_component.component_basicpackages.arn,
+          aws_imagebuilder_component.component_installansible.arn,
+          aws_imagebuilder_component.component_downloadplaybook.arn,
+          aws_imagebuilder_component.component_runplaybookreboot.arn,
+          aws_imagebuilder_image_recipe.recipe_main.arn,
+          aws_imagebuilder_infrastructure_configuration.infra_main.arn,
+          aws_imagebuilder_distribution_configuration.distribution_main.arn
+        ]
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role" "role_ssm" {
-  name   = "RoleSsmAmi${random_string.random_id.result}"
+  name   = "RoleSsmAmi${var.Name}${random_string.random_id.result}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -81,280 +113,256 @@ resource "aws_iam_role" "role_ssm" {
   }
 }
 
+resource "aws_iam_instance_profile" "instanceprofile_main" {
+  name = "InstanceprofileAmi${var.Name}${random_string.random_id.result}"
+  role = aws_iam_role.role_ssm.name
+}
+
 ##############################
-# Ssm Document
+# Components Block
 ##############################
 
-resource "aws_ssm_document" "ssmdocument_main" {
-  name          = "SsmDocAmi${var.Name}${random_string.random_id.result}"
-  document_type = "Automation"
-  depends_on = [aws_s3_object.object]
-  content = jsonencode({
-    "schemaVersion": "0.3",
-    "mainSteps": [
-      {
-        "name":"DescribeImage",
-        "action":"aws:executeAwsApi",
-        "nextStep":"DeleteAMI",
-        "isEnd":false,
-        "inputs":{
-          "Service":"ec2",
-          "Api":"DescribeImages",
-          "Filters":[
-            { "Name":"name", "Values": ["Ami${var.Name}${random_string.random_id.result}"]},
-            { "Name":"state", "Values":["available"]}
-          ]
-        },
-        "outputs": [{ "Name": "ImageId", "Selector": "$.Images[0].ImageId", "Type": "String"}]
-      },
-      {
-        "name": "DeleteAMI",
-        "action": "aws:deleteImage",
-        "nextStep": "LaunchInstance",
-        "isCritical": false,
-        "isEnd": false,
-        "onFailure": "step:LaunchInstance",
-        "inputs": {
-          "ImageId": "{{ DescribeImage.ImageId }}"}
-        },
-      {
-        "name": "LaunchInstance",
-        "action": "aws:runInstances",
-        "nextStep": "TagInstance",
-        "isEnd": false,
-        "inputs": {
-          "ImageId": "${var.Instance.ParentImage}",
-          "InstanceType": "${var.Instance.InstanceType}",
-          "SecurityGroupIds": ["${var.Instance.SecurityGroup}"],
-          "SubnetId": "${var.Instance.Subnet}",
-          "KeyName": "${var.Instance.KeyPair}",
-          "IamInstanceProfileName": "${aws_iam_role.role_ssm.name}"
-        }
-      },
-      {
-        "name": "TagInstance",
-        "action": "aws:createTags",
-        "nextStep": "Update",
-        "inputs": {
-          "Tags": [
-            { "Key": "Name", "Value": "InstanceSsmAmi${var.Name}${random_string.random_id.result}" },
-            { "Key": "Product", "Value": var.Product },
-            { "Key": "Environment", "Value": var.Environment },
-          ],
-          "ResourceIds": [ "{{ LaunchInstance.InstanceIds }}"]
-        }
-      },
-      {
-        "name": "Update",
-        "action": "aws:runCommand",
-        "nextStep": "BasicPackages",
-        "onFailure": "step:TerminateInstance",
-        "isEnd": false,
-        "inputs": {
-          "InstanceIds": ["{{ LaunchInstance.InstanceIds }}"],
-          "DocumentName": "AWS-RunShellScript",
-          "Parameters": {
-            "commands": [
-              "sudo DEBIAN_FRONTEND='noninteractive' apt-get update",
-              "sudo DEBIAN_FRONTEND='noninteractive' apt-get upgrade -y"
-            ]
-          }
-        }
-      },
-      {
-        "name": "BasicPackages",
-        "action": "aws:runCommand",
-        "nextStep": "InstallAwsCli",
-       "onFailure": "step:TerminateInstance",
-        "isEnd": false,
-        "inputs": {
-          "InstanceIds": ["{{ LaunchInstance.InstanceIds }}"],
-          "DocumentName": "AWS-RunShellScript",
-          "Parameters": {
-            "commands": [
-              "sudo DEBIAN_FRONTEND='noninteractive' apt-get install curl wget unzip software-properties-common -y"
-            ]
-          }
-        }
-      },
-      {
-        "name": "InstallAwsCli",
-        "action": "aws:runCommand",
-        "nextStep": "InstallAnsible",
-        "onFailure": "step:TerminateInstance",
-        "isEnd": false,
-        "inputs": {
-          "InstanceIds": ["{{ LaunchInstance.InstanceIds }}"],
-          "DocumentName": "AWS-RunShellScript",
-          "Parameters": {
-            "commands": [
-              "curl 'https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip' -o '/tmp/awscliv2.zip'",
-              "unzip /tmp/awscliv2.zip -d /tmp",
-              "sudo DEBIAN_FRONTEND='noninteractive' /tmp/aws/install"
-            ]
-          }
-        }
-      },
-      {
-        "name": "InstallAnsible",
-        "action": "aws:runCommand",
-        "nextStep": "S3Object",
-       "onFailure": "step:TerminateInstance",
-        "isEnd": false,
-        "inputs": {
-          "InstanceIds": ["{{ LaunchInstance.InstanceIds }}"],
-          "DocumentName": "AWS-RunShellScript",
-          "Parameters": {
-            "commands": [
-              "sudo DEBIAN_FRONTEND='noninteractive' add-apt-repository --yes ppa:ansible/ansible",
-              "sudo DEBIAN_FRONTEND='noninteractive' apt-get update -y",
-              "sudo DEBIAN_FRONTEND='noninteractive' apt-get install -y ansible"
-            ]
-          }
-        }
-      },
-      {
-        "name": "S3Object",
-        "action": "aws:runCommand",
-        "nextStep": "RunPlaybook",
-        "onFailure": "step:TerminateInstance",
-        "isEnd": false,
-        "inputs": {
-          "InstanceIds": ["{{ LaunchInstance.InstanceIds }}"],
-          "DocumentName": "AWS-RunShellScript",
-          "Parameters": {
-            "commands": [
-              "aws s3 cp s3://${aws_s3_bucket.bucket.bucket}/${aws_s3_object.object.key} /tmp/playbook.yml"
-            ]
-          }
-        }
-      },
-      {
-        "name": "RunPlaybook",
-        "action": "aws:runCommand",
-        "nextStep": "CreateAmi",
-        "onFailure": "step:TerminateInstance",
-        "isEnd": false,
-        "inputs": {
-          "InstanceIds": ["{{ LaunchInstance.InstanceIds }}"],
-          "DocumentName": "AWS-RunShellScript",
-          "Parameters": {
-            "commands": [
-              "echo '${jsonencode(var.ExtraVars)}' > /tmp/extravars.json",
-              "ansible-playbook -i localhost, -e 'ansible_connection=local ansible_python_interpreter=/usr/bin/python3' -e @/tmp/extravars.json /tmp/playbook.yml"
-            ]
-          }
-        }
-      },
-      {
-        "name": "CreateAmi",
-        "action": "aws:createImage",
-        "nextStep": "TagAMI",
-        "isEnd": false,
-        "inputs": {
-          "InstanceId": "{{ LaunchInstance.InstanceIds }}",
-          "ImageName": "Ami${var.Name}${random_string.random_id.result}"
-        }
-      },
-      {
-        "name": "TagAMI",
-        "action": "aws:createTags",
-        "nextStep": "TerminateInstance",
-        "isEnd": false,
-        "inputs": {
-          "ResourceType": "EC2",
-          "ResourceIds": [
-            "{{ CreateAmi.ImageId }}"
-          ],
-          "Tags": [
-            { "Key": "Name", "Value": "Ami${var.Name}${random_string.random_id.result}" },
-            { "Key": "Product", "Value": var.Product },
-            { "Key": "Environment", "Value": var.Environment },
-          ],
-        }
-      },
-      {
-        "name": "TerminateInstance",
-        "action": "aws:executeAwsApi",
-        "isEnd": true,
-        "inputs": {
-          "Service": "ec2",
-          "Api": "TerminateInstances",
-          "InstanceIds": "{{ LaunchInstance.InstanceIds }}"
-        }
-      }
-    ]
-  })
+resource "aws_imagebuilder_component" "component_basicpackages" {
+  name     = "AmiComponentBasicPackages${var.Name}${random_string.random_id.result}"
+  version  = "1.0.0"
+  platform = "Linux"
+  data     = file("${path.module}/components/basic_packages.yml")
   tags = {
-    Name        = "SsmDocAmi${var.Name}"
+    Name        = "AmiComponentBasicPackages${var.Name}"
     Product     = var.Product
     Environment = var.Environment
   }
 }
 
-# Run document
-/*
-resource "null_resource" "null_ssm_run" {
-  triggers = {
-    playbook_checksum = filemd5(var.Playbook)
-    extravars_hash    = md5(jsonencode(var.ExtraVars))
+resource "aws_imagebuilder_component" "component_installansible" {
+  name     = "AmiComponentAnsible${var.Name}${random_string.random_id.result}"
+  version  = "1.0.0"
+  platform = "Linux"
+  data     = file("${path.module}/components/install_ansible.yml")
+  tags = {
+    Name        = "AmiComponentAnsible${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
   }
-  depends_on = [aws_ssm_document.ssmdocument_main]
+}
+
+resource "aws_imagebuilder_component" "component_downloadplaybook" {
+  name     = "AmiComponentDownloadPlaybook${var.Name}${random_string.random_id.result}"
+  version  = "1.0.0"
+  platform = "Linux"
+  data     = file("${path.module}/components/download_playbook.yml")
+  tags = {
+    Name        = "AmiComponentDownloadPlaybook${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
+}
+
+resource "aws_imagebuilder_component" "component_runplaybookreboot" {
+  name             = "AmiComponentRunPlaybookReboot${var.Name}${random_string.random_id.result}"
+  version  = "1.0.0"
+  platform = "Linux"
+  data     = file("${path.module}/components/run_playbook_reboot.yml")
+  tags = {
+    Name        = "AmiComponentRunPlaybookReboot${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
+}
+
+##############################
+# Recipe Block
+##############################
+
+resource "aws_imagebuilder_image_recipe" "recipe_main" {
+  name         = "AmiRecipe${var.Name}${random_string.random_id.result}"
+  version      = "1.0.0"
+  parent_image = var.Instance.ParentImage
+  component { component_arn = aws_imagebuilder_component.component_basicpackages.arn }
+  #component { component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/aws-cli-version-2-linux/1.0.4/1" }
+  component { component_arn = aws_imagebuilder_component.component_installansible.arn }
+  component {
+    component_arn = aws_imagebuilder_component.component_downloadplaybook.arn
+    parameter {
+      name  = "S3Bucket"
+      value = aws_s3_bucket.bucket.bucket
+    }
+    parameter {
+      name  = "S3Key"
+      value = aws_s3_object.object.key
+    }
+  }
+  component {
+    component_arn = aws_imagebuilder_component.component_runplaybookreboot.arn
+    parameter {
+      name  = "ExtraVars"
+      value = jsonencode(var.ExtraVars)
+    }
+  }
+  tags = {
+    Name        = "AmiRecipe${var.Name}"
+    Product     = var.Product
+    Environment = var.Environment
+  }
+}
+
+##############################
+# Infrastructure Block
+##############################
+
+resource "aws_imagebuilder_infrastructure_configuration" "infra_main" {
+  name                 = "AmiInfra${var.Name}${random_string.random_id.result}"
+  instance_profile_name = aws_iam_instance_profile.instanceprofile_main.name
+  instance_types       = [var.Instance.InstanceType]
+  subnet_id            = var.Instance.Subnet
+  security_group_ids   = [var.Instance.SecurityGroup]
+  key_pair             = var.Instance.KeyPair
+}
+
+##############################
+# Distribution Configuration
+##############################
+
+resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
+  name = "AmiDistribution${var.Name}${random_string.random_id.result}"
+  distribution {
+    region = data.aws_region.current.name
+    ami_distribution_configuration {
+      name        = "Ami${var.Name}${random_string.random_id.result}-{{ imagebuilder:buildDate }}"
+      ami_tags = {
+        Name        = var.Name
+        Product     = var.Product
+        Environment = var.Environment
+      }
+    }
+  }
+  tags = {
+    Name        = var.Name
+    Product     = var.Product
+    Environment = var.Environment
+  }
+}
+
+##############################
+# Pipeline Block
+##############################
+
+resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
+  name                                = "AmiPipeline${var.Name}${random_string.random_id.result}"
+  image_recipe_arn                    = aws_imagebuilder_image_recipe.recipe_main.arn
+  infrastructure_configuration_arn    = aws_imagebuilder_infrastructure_configuration.infra_main.arn
+  distribution_configuration_arn   = aws_imagebuilder_distribution_configuration.distribution_main.arn
+  image_tests_configuration {
+    image_tests_enabled = false
+  }
+  lifecycle {
+    replace_triggered_by = [
+      aws_imagebuilder_image_recipe.recipe_main
+    ]
+  }
+}
+
+##############################
+# Trigger Block
+##############################
+
+resource "null_resource" "resource_main" {
+  triggers = {
+    playbook_md5      = filemd5(var.Playbook)
+    extra_vars_sha256 = sha256(jsonencode(var.ExtraVars))
+  }
+  depends_on = [
+    aws_imagebuilder_image_pipeline.pipeline_main
+  ]
   provisioner "local-exec" {
     command = <<EOT
-      AUTOMATION_ID=$(aws ssm start-automation-execution \
-        --document-name ${aws_ssm_document.ssmdocument_main.name} \
-        --query "AutomationExecutionId" \
-        --output text)
 
+      # Find Ami and delete if exists
+      
       echo ""
-      echo -e "\e[32m ==> AutomationExecutionId: $AUTOMATION_ID\e[0m"
+      echo -e "\e[33m ==> Searching AMIs with name: ${var.Name}\e[0m"
       echo ""
 
-      for i in $(seq 1 90); do
-        WAIT_TIME=30
-        AUTOMATION_STATUS=$(aws ssm get-automation-execution \
-          --automation-execution-id "$AUTOMATION_ID" \
-          --query "AutomationExecution.AutomationExecutionStatus" \
-          --output text)
+      DESCRIBE_AMIS=$(aws ec2 describe-images \
+        --filters "Name=tag:Name,Values=${var.Name}" "Name=state,Values=available" \
+        --query 'Images[*].ImageId' --output text) || exit 1
+
+      DESCRIBE_AMIS=$(aws ec2 describe-images \
+        --filters \
+          "Name=name,Values=Ami${var.Name}${random_string.random_id.result}-*" \
+          "Name=state,Values=available" \
+        --query 'Images[*].ImageId' \
+        --output text) || exit 1
+
+      if [ -n "$DESCRIBE_AMIS" ]; then
+        for ami in $DESCRIBE_AMIS; do
+          echo ""
+          echo -e "\e[33m ==> Ami found with name $ami, DELETING\e[0m"
+          echo ""
+          aws ec2 deregister-image --image-id "$ami"
+          DESCRIBE_IMAGES=$(aws ec2 describe-images \
+            --image-ids "$ami" \
+            --query 'Images[0].BlockDeviceMappings[*].Ebs.SnapshotId' \
+            --output text) || exit 1  # :contentReference[oaicite:1]{index=1}
+          for snap in $DESCRIBE_IMAGES; do
+            if [ "$snap" != "None" ]; then
+              echo ""
+              echo -e "\e[33m ==> Image AMI found with name $snap, DELETING\e[0m"
+              echo ""
+              aws ec2 delete-snapshot --snapshot-id "$snap"
+            fi
+          done
+        done
+      else
+        echo ""
+        echo -e "\e[32m ==> No ami found, continue creating AMI\e[0m"
+        echo ""
+      fi
+
+      echo ""
+      echo -e "\e[33m ==> Running imagebuilder Pipeline\e[0m"
+      echo ""
+
+      PIPELINE=$(aws imagebuilder start-image-pipeline-execution \
+        --image-pipeline-arn ${aws_imagebuilder_image_pipeline.pipeline_main.arn} \
+        --region ${data.aws_region.current.name} \
+        --query 'imageBuildVersionArn' --output text) || exit 1
+
+      echo ""
+      echo -e "\e[33m ==> Running imagebuilder Pipeline Executed, ARN $PIPELINE\e[0m"
+      echo -e "\e[33m ==> Waiting for AMI available\e[0m"
+      echo ""
+
+      while true; do
+        PIPELINE_STATUS=$(aws imagebuilder get-image \
+          --image-build-version-arn $PIPELINE \
+          --region ${data.aws_region.current.name} \
+          --query 'image.state.status' --output text)
           
         echo ""
-        echo -e "\e[33m ==> Automation Execution Status: $AUTOMATION_STATUS\e[0m"
-        echo -e "\e[33m ==> Waiting $WAIT_TIME\e[0m"
+        echo -e "\e[33m ==> Pipeline Status $PIPELINE_STATUS\e[0m"
         echo ""
 
-        sleep $WAIT_TIME;
-
-        if [ "$AUTOMATION_STATUS" = "Success" ]; then
+        if [ "$PIPELINE_STATUS" = "AVAILABLE" ]; then
           echo ""
-          echo -e "\e[32m ==> Automation SUCCESS\e[0m"
+          echo -e "\e[32m ==> ✔️ Build COMPLETED\e[0m"
           echo ""
-          exit 0
-        fi
-
-        if [ "$AUTOMATION_STATUS" = "Failed" ] || [ "$AUTOMATION_STATUS" = "Cancelled" ]; then
+          break
+        elif [ "$PIPELINE_STATUS" = "FAILED" ]; then
           echo ""
-          echo -e "\e[31m ==> Automation FAILED: $AUTOMATION_STATUS\e[0m"
+          echo -e "\e[31m ==> ❌ Build FAILED\e[0m"
           echo ""
           exit 1
         fi
+        echo ""
+        echo -e "\e[33m ==> Waiting 30s\e[0m"
+        echo ""
+        sleep 30
       done
-
       echo ""
-      echo -e "\e[31m ==> Automation TIMEOUT\e[0m"
+      echo -e "\e[32m ==> Build Complete\e[0m"
       echo ""
-      exit 1
     EOT
   }
 }
 
-data "aws_ami" "data_ami" {
-  most_recent = true
-  owners = ["self"]
-  filter {
-    name   = "name"
-    values = ["Ami${var.Name}${random_string.random_id.result}"]
-  }
-  depends_on = [null_resource.null_ssm_run]
-}
-*/
