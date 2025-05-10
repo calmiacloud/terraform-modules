@@ -230,4 +230,95 @@ resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
   }
 }
 
-# aws imagebuilder start-image-pipeline-execution --image-pipeline-arn $ARN
+##############################
+# Trigger Block
+##############################
+
+resource "null_resource" "resource_main" {
+  triggers = {
+    playbook_md5      = filemd5(var.Playbook)
+    extra_vars_sha256 = sha256(jsonencode(var.ExtraVars))
+  }
+  depends_on = [
+    aws_imagebuilder_image_pipeline.pipeline
+  ]
+  provisioner "local-exec" {
+    command = <<EOT
+
+      # Find Ami and delete if exists
+      
+      echo ""
+      echo -e "\e[33m ==> Searching AMIs with name: ${var.AmiName}\e[0m"
+      echo ""
+
+      DESCRIBE_AMIS=$(aws ec2 describe-images \
+        --filters "Name=tag:Name,Values=${var.AmiName}" "Name=state,Values=available" \
+        --query 'Images[*].ImageId' --output text) || exit 1
+
+      if [ -n "$DESCRIBE_AMIS" ]; then
+        for ami in $DESCRIBE_AMIS; do
+          echo ""
+          echo -e "\e[33m ==> Ami found with name $ami, DELETING\e[0m"
+          echo ""
+          aws ec2 deregister-image --image-id "$ami"
+          DESCRIBE_IMAGES=$(aws ec2 describe-images \
+            --image-ids "$ami" \
+            --query 'Images[0].BlockDeviceMappings[*].Ebs.SnapshotId' \
+            --output text) || exit 1  # :contentReference[oaicite:1]{index=1}
+          for snap in $DESCRIBE_IMAGES; do
+            if [ "$snap" != "None" ]; then
+              echo ""
+              echo -e "\e[33m ==> Image AMI found with name $snap, DELETING\e[0m"
+              echo ""
+              aws ec2 delete-snapshot --snapshot-id "$snap"
+            fi
+          done
+        done
+      else
+        echo ""
+        echo -e "\e[32m ==> No ami found, continue creating AMI\e[0m"
+        echo ""
+      fi
+
+      echo ""
+      echo -e "\e[33m ==> Running imagebuilder Pipeline\e[0m"
+      echo ""
+
+      PIPELINE=$(aws imagebuilder start-image-pipeline-execution \
+        --image-pipeline-arn ${aws_imagebuilder_image_pipeline.pipeline.arn} \
+        --region ${data.aws_region.current.name} \
+        --query 'imageBuildVersionArn' --output text) || exit 1
+
+      echo ""
+      echo -e "\e[32m ==> Running imagebuilder Pipeline Executed, ARN $PIPELINE\e[0m"
+      echo -e "\e[32m ==> Waiting for AMI available\e[0m"
+      echo ""
+
+      while true; do
+        PIPELINE_STATUS=$(aws imagebuilder get-image \
+          --image-build-version-arn $exec_arn \
+          --region ${data.aws_region.current.name} \
+          --query 'image.state.status' --output text)
+        echo "  • Estado actual: $PIPELINE_STATUS"
+        if [ "$PIPELINE_STATUS" = "AVAILABLE" ]; then
+          echo ""
+          echo -e "\e[32m ==> ✔️ Build COMPLETED\e[0m"
+          echo ""
+          break
+        elif [ "$PIPELINE_STATUS" = "FAILED" ]; then
+          echo ""
+          echo -e "\e[31m ==> ❌ Build FAILED\e[0m"
+          echo ""
+          exit 1
+        fi
+        echo ""
+        echo -e "\e[32m ==> Waiting 30s\e[0m"
+        echo ""
+        sleep 30
+      done
+      echo ""
+      echo -e "\e[32m ==> Build Complete\e[0m"
+      echo ""
+    EOT
+  }
+}
