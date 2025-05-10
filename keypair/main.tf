@@ -14,14 +14,14 @@ resource "random_string" "random_id" {
 # SSH Block
 ##################################
 
-resource "tls_private_key" "sshpair" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
+#resource "tls_private_key" "sshpair" {
+#  algorithm = "RSA"
+#  rsa_bits  = 4096
+#}
 
 resource "aws_key_pair" "keypair" {
   key_name   = "${var.Name}${random_string.random_id.result}"
-  public_key = tls_private_key.sshpair.public_key_openssh
+  public_key = var.PublicKey
   tags = {
     Name        = "vpc-${var.Name}"
     Product     = var.Product

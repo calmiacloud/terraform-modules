@@ -9,3 +9,7 @@ variable "Product" {
 variable "Environment" {
   type        = string
 }
+
+variable "PublicKey" {
+  type        = string
+}
