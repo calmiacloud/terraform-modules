@@ -297,8 +297,8 @@ resource "null_resource" "resource_main" {
         --query 'imageBuildVersionArn' --output text) || exit 1
 
       echo ""
-      echo -e "\e[32m ==> Running imagebuilder Pipeline Executed, ARN $PIPELINE\e[0m"
-      echo -e "\e[32m ==> Waiting for AMI available\e[0m"
+      echo -e "\e[33m ==> Running imagebuilder Pipeline Executed, ARN $PIPELINE\e[0m"
+      echo -e "\e[33m ==> Waiting for AMI available\e[0m"
       echo ""
 
       while true; do
@@ -319,7 +319,7 @@ resource "null_resource" "resource_main" {
           exit 1
         fi
         echo ""
-        echo -e "\e[32m ==> Waiting 30s\e[0m"
+        echo -e "\e[33m ==> Waiting 30s\e[0m"
         echo ""
         sleep 30
       done
