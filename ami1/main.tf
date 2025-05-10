@@ -240,7 +240,7 @@ resource "null_resource" "resource_main" {
     extra_vars_sha256 = sha256(jsonencode(var.ExtraVars))
   }
   depends_on = [
-    aws_imagebuilder_image_pipeline.pipeline
+    aws_imagebuilder_image_pipeline.pipeline_main
   ]
   provisioner "local-exec" {
     command = <<EOT
@@ -285,7 +285,7 @@ resource "null_resource" "resource_main" {
       echo ""
 
       PIPELINE=$(aws imagebuilder start-image-pipeline-execution \
-        --image-pipeline-arn ${aws_imagebuilder_image_pipeline.pipeline.arn} \
+        --image-pipeline-arn ${aws_imagebuilder_image_pipeline.pipeline_main.arn} \
         --region ${data.aws_region.current.name} \
         --query 'imageBuildVersionArn' --output text) || exit 1
 
