@@ -8,4 +8,4 @@ phases:
         action: ExecuteBash
         inputs:
           commands:
-            - sudo dnf install -y ansible
+            - sudo yum install -y ansible
