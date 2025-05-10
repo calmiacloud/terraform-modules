@@ -223,6 +223,11 @@ resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
   image_tests_configuration {
     image_tests_enabled = false
   }
+  lifecycle {
+    replace_triggered_by = [
+      aws_imagebuilder_image_recipe.recipe_main
+    ]
+  }
 }
 
 # aws imagebuilder start-image-pipeline-execution --image-pipeline-arn $ARN
