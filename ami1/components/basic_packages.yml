@@ -10,11 +10,6 @@ phases:
         inputs:
           exclude:
             - amazon-ssm-agent
-      - name: basic-packages
-        action: ExecuteBash
-        inputs:
-          commands:
-            - sudo apt-get install -y curl wget unzip software-properties-common
       - name: Reboot
         action: Reboot
         onFailure: Abort
