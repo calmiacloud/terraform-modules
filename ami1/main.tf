@@ -306,7 +306,11 @@ resource "null_resource" "resource_main" {
           --image-build-version-arn $PIPELINE \
           --region ${data.aws_region.current.name} \
           --query 'image.state.status' --output text)
-        echo "  • Estado actual: $PIPELINE_STATUS"
+          
+        echo ""
+        echo -e "\e[33m ==> Pipeline Status $PIPELINE_STATUS\e[0m"
+        echo ""
+
         if [ "$PIPELINE_STATUS" = "AVAILABLE" ]; then
           echo ""
           echo -e "\e[32m ==> ✔️ Build COMPLETED\e[0m"
