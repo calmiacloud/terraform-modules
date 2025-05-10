@@ -248,11 +248,11 @@ resource "null_resource" "resource_main" {
       # Find Ami and delete if exists
       
       echo ""
-      echo -e "\e[33m ==> Searching AMIs with name: ${var.AmiName}\e[0m"
+      echo -e "\e[33m ==> Searching AMIs with name: ${var.Name}\e[0m"
       echo ""
 
       DESCRIBE_AMIS=$(aws ec2 describe-images \
-        --filters "Name=tag:Name,Values=${var.AmiName}" "Name=state,Values=available" \
+        --filters "Name=tag:Name,Values=${var.Name}" "Name=state,Values=available" \
         --query 'Images[*].ImageId' --output text) || exit 1
 
       if [ -n "$DESCRIBE_AMIS" ]; then
