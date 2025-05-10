@@ -58,6 +58,38 @@ resource "aws_iam_policy" "policy_bucket" {
   }
 }
 
+
+resource "aws_iam_role_policy" "policy_imagebuilder" {
+  name = "AllowImageBuilderGetComponents"
+  role = aws_iam_role.role_ssm.name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "imagebuilder:GetComponent",
+          "imagebuilder:GetComponentPolicy",
+          "imagebuilder:GetImageRecipe",
+          "imagebuilder:GetImageRecipePolicy",
+          "imagebuilder:GetInfrastructureConfiguration",
+          "imagebuilder:GetDistributionConfiguration",
+          "imagebuilder:GetImage"
+        ]
+        Resource = [
+          aws_imagebuilder_component.component_basicpackages.arn,
+          aws_imagebuilder_component.component_installansible.arn,
+          aws_imagebuilder_component.component_downloadplaybook.arn,
+          aws_imagebuilder_component.component_runplaybookreboot.arn,
+          aws_imagebuilder_image_recipe.recipe_main.arn,
+          aws_imagebuilder_infrastructure_configuration.infra_main.arn,
+          aws_imagebuilder_distribution_configuration.distribution_main.arn
+        ]
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role" "role_ssm" {
   name   = "RoleSsmAmi${var.Name}${random_string.random_id.result}"
   assume_role_policy = jsonencode({
