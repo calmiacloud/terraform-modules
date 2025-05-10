@@ -10,6 +10,6 @@ variable "Environment" {
   type        = string
 }
 
-variable "PublicKey" {
+variable "PublicKeyB64" {
   type        = string
 }
