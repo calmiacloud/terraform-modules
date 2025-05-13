@@ -10,10 +10,10 @@ parameters:
 phases:
   - name: build
     steps:
-      - name: DownloadPlaybook
+      - name: DownloadPlaybooks
         action: S3Download
         maxAttempts: 3
         inputs:
-          - source: "s3://{{ S3Bucket }}/{{ S3Key }}"
+          - source: "s3://{{ S3Bucket }}/{{ S3Key }}/"
             destination: "/tmp/playbook"
             overwrite: true
