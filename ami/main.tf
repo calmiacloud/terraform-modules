@@ -181,7 +181,7 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
       value = aws_s3_bucket.bucket.bucket
     }
     parameter {
-      name  = "S3Key"
+      name  = "S3Prefix"
       value = "playbook"
     }
   }
