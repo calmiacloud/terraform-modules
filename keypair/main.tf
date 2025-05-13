@@ -1,15 +1,3 @@
-##############################
-# Name
-##############################
-
-resource "random_string" "random_id" {
-  length  = 6
-  upper   = true
-  lower   = true
-  numeric = true
-  special = false
-}
-
 #################################
 # SSH Block
 ##################################
@@ -20,11 +8,11 @@ resource "random_string" "random_id" {
 #}
 
 resource "aws_key_pair" "keypair" {
-  key_name   = "${var.Name}${random_string.random_id.result}"
+  key_name   = "${var.Name}${var.Stage}"
   public_key = base64decode(var.PublicKeyB64)
   tags = {
     Name        = "vpc-${var.Name}"
-    Product     = var.Product
+    Stage       = var.Stage
     Environment = var.Environment
   }
 }

@@ -1,25 +1,13 @@
 ##############################
-# Name
-##############################
-
-resource "random_string" "random_id" {
-  length  = 6
-  upper   = true
-  lower   = true
-  numeric = true
-  special = false
-}
-
-##############################
 # Bucket
 ##############################
 
 resource "aws_s3_bucket" "bucket" {
-  bucket = lower("BucketAmi${var.Name}${random_string.random_id.result}")
+  bucket = lower("BucketAmi${var.Name}${var.Stage}")
   force_destroy = true
   tags = {
     Name        = "BucketAmi${var.Name}"
-    Product     = var.Product
+    Stage       = var.Stage
     Environment = var.Environment
   }
 }
@@ -37,7 +25,7 @@ resource "aws_s3_object" "object" {
 ##############################
 
 resource "aws_iam_policy" "policy_bucket" {
-  name   = "PolicyBucketAmi${var.Name}${random_string.random_id.result}"
+  name   = "PolicyBucketAmi${var.Name}${var.Stage}"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement: [
@@ -53,7 +41,7 @@ resource "aws_iam_policy" "policy_bucket" {
   })
   tags = {
     Name        = "PolicyBucketAmi${var.Name}"
-    Product     = var.Product
+    Stage       = var.Stage
     Environment = var.Environment
   }
 }
@@ -91,7 +79,7 @@ resource "aws_iam_role_policy" "policy_imagebuilder" {
 }
 
 resource "aws_iam_role" "role_ssm" {
-  name   = "RoleSsmAmi${var.Name}${random_string.random_id.result}"
+  name   = "RoleSsmAmi${var.Name}${var.Stage}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -108,13 +96,13 @@ resource "aws_iam_role" "role_ssm" {
   ]
   tags = {
     Name        = "PolicySsmAmi${var.Name}"
-    Product     = var.Product
+    Stage       = var.Stage
     Environment = var.Environment
   }
 }
 
 resource "aws_iam_instance_profile" "instanceprofile_main" {
-  name = "InstanceprofileAmi${var.Name}${random_string.random_id.result}"
+  name = "InstanceprofileAmi${var.Name}${var.Stage}"
   role = aws_iam_role.role_ssm.name
 }
 
@@ -123,49 +111,49 @@ resource "aws_iam_instance_profile" "instanceprofile_main" {
 ##############################
 
 resource "aws_imagebuilder_component" "component_basicpackages" {
-  name     = "AmiComponentBasicPackages${var.Name}${random_string.random_id.result}"
+  name     = "AmiComponentBasicPackages${var.Name}${var.Stage}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/components/basic_packages.yml")
   tags = {
     Name        = "AmiComponentBasicPackages${var.Name}"
-    Product     = var.Product
+    Stage       = var.Stage
     Environment = var.Environment
   }
 }
 
 resource "aws_imagebuilder_component" "component_installansible" {
-  name     = "AmiComponentAnsible${var.Name}${random_string.random_id.result}"
+  name     = "AmiComponentAnsible${var.Name}${var.Stage}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/components/install_ansible.yml")
   tags = {
     Name        = "AmiComponentAnsible${var.Name}"
-    Product     = var.Product
+    Stage       = var.Stage
     Environment = var.Environment
   }
 }
 
 resource "aws_imagebuilder_component" "component_downloadplaybook" {
-  name     = "AmiComponentDownloadPlaybook${var.Name}${random_string.random_id.result}"
+  name     = "AmiComponentDownloadPlaybook${var.Name}${var.Stage}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/components/download_playbook.yml")
   tags = {
     Name        = "AmiComponentDownloadPlaybook${var.Name}"
-    Product     = var.Product
+    Stage       = var.Stage
     Environment = var.Environment
   }
 }
 
 resource "aws_imagebuilder_component" "component_runplaybookreboot" {
-  name             = "AmiComponentRunPlaybookReboot${var.Name}${random_string.random_id.result}"
+  name             = "AmiComponentRunPlaybookReboot${var.Name}${var.Stage}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/components/run_playbook_reboot.yml")
   tags = {
     Name        = "AmiComponentRunPlaybookReboot${var.Name}"
-    Product     = var.Product
+    Stage       = var.Stage
     Environment = var.Environment
   }
 }
@@ -175,7 +163,7 @@ resource "aws_imagebuilder_component" "component_runplaybookreboot" {
 ##############################
 
 resource "aws_imagebuilder_image_recipe" "recipe_main" {
-  name         = "AmiRecipe${var.Name}${random_string.random_id.result}"
+  name         = "AmiRecipe${var.Name}${var.Stage}"
   version      = "1.0.0"
   parent_image = var.Instance.ParentImage
   component { component_arn = aws_imagebuilder_component.component_basicpackages.arn }
@@ -201,7 +189,7 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
   }
   tags = {
     Name        = "AmiRecipe${var.Name}"
-    Product     = var.Product
+    Stage       = var.Stage
     Environment = var.Environment
   }
 }
@@ -211,7 +199,7 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
 ##############################
 
 resource "aws_imagebuilder_infrastructure_configuration" "infra_main" {
-  name                 = "AmiInfra${var.Name}${random_string.random_id.result}"
+  name                 = "AmiInfra${var.Name}${var.Stage}"
   instance_profile_name = aws_iam_instance_profile.instanceprofile_main.name
   instance_types       = [var.Instance.InstanceType]
   subnet_id            = var.Instance.Subnet
@@ -224,11 +212,11 @@ resource "aws_imagebuilder_infrastructure_configuration" "infra_main" {
 ##############################
 
 resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
-  name = "AmiDistribution${var.Name}${random_string.random_id.result}"
+  name = "AmiDistribution${var.Name}${var.Stage}"
   distribution {
     region = data.aws_region.current.name
     ami_distribution_configuration {
-      name        = "Ami${var.Name}${random_string.random_id.result}-{{ imagebuilder:buildDate }}"
+      name        = "Ami${var.Name}${var.Stage}-{{ imagebuilder:buildDate }}"
       ami_tags = {
         Name        = var.Name
         Product     = var.Product
@@ -238,7 +226,7 @@ resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
   }
   tags = {
     Name        = var.Name
-    Product     = var.Product
+    Stage       = var.Stage
     Environment = var.Environment
   }
 }
@@ -248,7 +236,7 @@ resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
 ##############################
 
 resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
-  name                                = "AmiPipeline${var.Name}${random_string.random_id.result}"
+  name                                = "AmiPipeline${var.Name}${var.Stage}"
   image_recipe_arn                    = aws_imagebuilder_image_recipe.recipe_main.arn
   infrastructure_configuration_arn    = aws_imagebuilder_infrastructure_configuration.infra_main.arn
   distribution_configuration_arn   = aws_imagebuilder_distribution_configuration.distribution_main.arn
@@ -285,7 +273,7 @@ resource "null_resource" "resource_main" {
 
       DESCRIBE_AMIS=$(aws ec2 describe-images \
         --filters \
-          "Name=name,Values=Ami${var.Name}${random_string.random_id.result}-*" \
+          "Name=name,Values=Ami${var.Name}${var.Stage}-*" \
           "Name=state,Values=available" \
         --query 'Images[*].ImageId' \
         --output text) || exit 1

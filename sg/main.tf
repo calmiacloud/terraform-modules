@@ -1,25 +1,13 @@
 ##############################
-# Name
-##############################
-
-resource "random_string" "random_id" {
-  length  = 6
-  upper   = true
-  lower   = true
-  numeric = true
-  special = false
-}
-
-##############################
 # Security Group
 ##############################
 
 resource "aws_security_group" "sg" {
-  name        = "Sg${var.Name}${random_string.random_id.result}"
+  name        = "Sg${var.Name}${var.Stage}"
   vpc_id      = var.VpcId
   tags = {
     Name        = "Sg${var.Name}"
-    Product     = var.Product
+    Stage       = var.Stage
     Environment = var.Environment
   }
 }
