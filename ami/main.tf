@@ -1,4 +1,15 @@
 ##############################
+# Playbook Check Block
+##############################
+
+resource "null_resource" "resource_namecheck" {
+  count = contains(fileset(var.Source, "**/*"), "main.yml") ? 0 : 1
+  provisioner "local-exec" {
+    command = "echo 'ERROR: No se encontró main.yml en ${var.Source}' && exit 1"
+  }
+}
+
+##############################
 # Bucket
 ##############################
 
@@ -262,6 +273,7 @@ resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
     ]
   }
 }
+
 
 ##############################
 # Trigger Block
