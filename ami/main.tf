@@ -41,7 +41,7 @@ resource "aws_iam_policy" "policy_bucket" {
           "s3:GetObject",
           "s3:HeadObject"
         ],
-        Resource = "${aws_s3_bucket.bucket.arn}/*"
+        Resource = "${aws_s3_bucket.bucket.arn}/playbook/*"
       }
     ]
   })
