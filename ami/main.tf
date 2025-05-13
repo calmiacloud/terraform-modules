@@ -42,9 +42,17 @@ resource "aws_iam_policy" "policy_bucket" {
           "s3:HeadObject"
         ],
         Resource = "${aws_s3_bucket.bucket.arn}/playbook/*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:ListBucket"
+        ],
+        Resource = aws_s3_bucket.bucket.arn
       }
     ]
   })
+
   tags = {
     Name        = "PolicyBucketAmi${var.Name}"
     Product     = var.Product
