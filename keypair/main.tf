@@ -12,6 +12,7 @@ resource "aws_key_pair" "keypair" {
   public_key = base64decode(var.PublicKeyB64)
   tags = {
     Name        = "vpc-${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }

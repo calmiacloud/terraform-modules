@@ -9,6 +9,7 @@ resource "aws_vpc" "vpc" {
   assign_generated_ipv6_cidr_block = var.Vpc.Ipv6Support
   tags = {
     Name        = "Vpc${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -28,6 +29,7 @@ resource "aws_subnet" "subnet_public" {
   assign_ipv6_address_on_creation = var.Vpc.Ipv6Support ? true : null
   tags = {
     Name        = "SubnetPublic${var.Subnets.Public[count.index].Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -41,6 +43,7 @@ resource "aws_subnet" "subnet_nat" {
   map_public_ip_on_launch = false
   tags = {
     Name        = "SubnetNat${var.Subnets.Nat[count.index].Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -55,6 +58,7 @@ resource "aws_subnet" "subnet_private" {
   availability_zone = element(data.aws_availability_zones.available.names, 0) # ajusta si tienes varias AZs
   tags = {
     Name        = "SubnetPrivate${each.value.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -69,6 +73,7 @@ resource "aws_internet_gateway" "ig_internet" {
   vpc_id = aws_vpc.vpc.id
   tags = {
     Name        = "GwI${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -79,6 +84,7 @@ resource "aws_eip" "eip_ig_nat" {
   domain = "vpc"
   tags = {
     Name        = "EipGwNat${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -90,6 +96,7 @@ resource "aws_nat_gateway" "ig_nat" {
   subnet_id     = aws_subnet.subnet_public[0].id
   tags = {
     Name        = "GwNat${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -124,6 +131,7 @@ resource "aws_route_table" "rt_public" {
   }
   tags = {
     Name        = "RtPublic${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -149,6 +157,7 @@ resource "aws_route_table" "rt_nat" {
   }
   tags = {
     Name        = "RtNat${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -169,6 +178,7 @@ resource "aws_route_table" "rt_private" {
   }
   tags = {
     Name        = "RtPrivate${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }

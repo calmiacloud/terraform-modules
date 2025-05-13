@@ -7,6 +7,7 @@ resource "aws_s3_bucket" "bucket" {
   force_destroy = true
   tags = {
     Name        = "BucketAmi${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -41,6 +42,7 @@ resource "aws_iam_policy" "policy_bucket" {
   })
   tags = {
     Name        = "PolicyBucketAmi${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -96,6 +98,7 @@ resource "aws_iam_role" "role_ssm" {
   ]
   tags = {
     Name        = "PolicySsmAmi${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -117,6 +120,7 @@ resource "aws_imagebuilder_component" "component_basicpackages" {
   data     = file("${path.module}/components/basic_packages.yml")
   tags = {
     Name        = "AmiComponentBasicPackages${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -129,6 +133,7 @@ resource "aws_imagebuilder_component" "component_installansible" {
   data     = file("${path.module}/components/install_ansible.yml")
   tags = {
     Name        = "AmiComponentAnsible${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -141,6 +146,7 @@ resource "aws_imagebuilder_component" "component_downloadplaybook" {
   data     = file("${path.module}/components/download_playbook.yml")
   tags = {
     Name        = "AmiComponentDownloadPlaybook${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -153,6 +159,7 @@ resource "aws_imagebuilder_component" "component_runplaybookreboot" {
   data     = file("${path.module}/components/run_playbook_reboot.yml")
   tags = {
     Name        = "AmiComponentRunPlaybookReboot${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -189,6 +196,7 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
   }
   tags = {
     Name        = "AmiRecipe${var.Name}"
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
@@ -226,6 +234,7 @@ resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
   }
   tags = {
     Name        = var.Name
+    Product     = var.Product
     Stage       = var.Stage
     Environment = var.Environment
   }
