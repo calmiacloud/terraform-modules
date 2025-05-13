@@ -120,7 +120,7 @@ resource "aws_imagebuilder_component" "component_basicpackages" {
   name     = "AmiComponentBasicPackages${var.Name}${var.Stage}"
   version  = "1.0.0"
   platform = "Linux"
-  data     = file("${path.module}/components/basic_packages.yml")
+  data     = file("${path.module}/src/components/basic_packages.yml")
   tags = {
     Name        = "AmiComponentBasicPackages${var.Name}"
     Product     = var.Product
@@ -132,7 +132,7 @@ resource "aws_imagebuilder_component" "component_installansible" {
   name     = "AmiComponentAnsible${var.Name}${var.Stage}"
   version  = "1.0.0"
   platform = "Linux"
-  data     = file("${path.module}/components/install_ansible.yml")
+  data     = file("${path.module}/src/components/install_ansible.yml")
   tags = {
     Name        = "AmiComponentAnsible${var.Name}"
     Product     = var.Product
@@ -144,7 +144,7 @@ resource "aws_imagebuilder_component" "component_downloadplaybook" {
   name     = "AmiComponentDownloadPlaybook${var.Name}${var.Stage}"
   version  = "1.0.0"
   platform = "Linux"
-  data     = file("${path.module}/components/download_playbook.yml")
+  data     = file("${path.module}/src/components/download_playbook.yml")
   tags = {
     Name        = "AmiComponentDownloadPlaybook${var.Name}"
     Product     = var.Product
@@ -156,7 +156,7 @@ resource "aws_imagebuilder_component" "component_runplaybookreboot" {
   name             = "AmiComponentRunPlaybookReboot${var.Name}${var.Stage}"
   version  = "1.0.0"
   platform = "Linux"
-  data     = file("${path.module}/components/run_playbook_reboot.yml")
+  data     = file("${path.module}/src/components/run_playbook_reboot.yml")
   tags = {
     Name        = "AmiComponentRunPlaybookReboot${var.Name}"
     Product     = var.Product
