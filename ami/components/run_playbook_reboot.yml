@@ -4,6 +4,8 @@ schemaVersion: "1.0"
 parameters:
   - ExtraVars:
       type: string
+  - PlaybookPath:
+      type: string
 
 phases:
   - name: build
@@ -22,16 +24,18 @@ phases:
         inputs:
           commands:
             - |
-                ansible-playbook \
-                  -i localhost, \
-                  -c local \
-                  -e 'ansible_python_interpreter=/usr/bin/python3' \
-                  -vvv \
-                  -e @/tmp/extravars.json \
-                  /tmp/playbook.yml
+              ansible-playbook \
+                -i localhost, \
+                -c local \
+                -e 'ansible_python_interpreter=/usr/bin/python3' \
+                -vvv \
+                -e @/tmp/extravars.json \
+                {{ PlaybookPath }}
+
       - name: Reboot
         action: Reboot
         onFailure: Abort
+
       - name: PostReboot
         action: ExecuteBash
         inputs:

@@ -193,6 +193,10 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
       name  = "ExtraVars"
       value = jsonencode(var.ExtraVars)
     }
+    parameter {
+      name  = "PlaybookPath"
+      value = "/tmp/playbook/main.yml"
+    }
   }
   tags = {
     Name        = "AmiRecipe${var.Name}"
