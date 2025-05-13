@@ -15,7 +15,6 @@ resource "aws_s3_bucket" "bucket" {
     Name        = "BucketAmi${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -50,7 +49,6 @@ resource "aws_iam_policy" "policy_bucket" {
     Name        = "PolicyBucketAmi${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -106,7 +104,6 @@ resource "aws_iam_role" "role_ssm" {
     Name        = "PolicySsmAmi${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -128,7 +125,6 @@ resource "aws_imagebuilder_component" "component_basicpackages" {
     Name        = "AmiComponentBasicPackages${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -141,7 +137,6 @@ resource "aws_imagebuilder_component" "component_installansible" {
     Name        = "AmiComponentAnsible${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -154,7 +149,6 @@ resource "aws_imagebuilder_component" "component_downloadplaybook" {
     Name        = "AmiComponentDownloadPlaybook${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -167,7 +161,6 @@ resource "aws_imagebuilder_component" "component_runplaybookreboot" {
     Name        = "AmiComponentRunPlaybookReboot${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -208,7 +201,6 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
     Name        = "AmiRecipe${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -238,7 +230,6 @@ resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
       ami_tags = {
         Name        = var.Name
         Product     = var.Product
-        Environment = var.Environment
       }
     }
   }
@@ -246,7 +237,6 @@ resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
     Name        = var.Name
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -272,6 +262,11 @@ resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
 ##############################
 # Trigger Block
 ##############################
+
+  provisioner "local-exec" {
+    command = "bash scripts/run_imagebuilder.sh ${aws_imagebuilder_image_pipeline.pipeline_main.arn} ${var.region} ${var.Name} ${var.Stage}"
+  }
+
 
 resource "null_resource" "resource_main" {
   triggers = {

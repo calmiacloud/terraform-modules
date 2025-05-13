@@ -9,7 +9,6 @@ resource "aws_security_group" "sg" {
     Name        = "Sg${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 

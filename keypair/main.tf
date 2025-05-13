@@ -14,6 +14,5 @@ resource "aws_key_pair" "keypair" {
     Name        = "vpc-${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }

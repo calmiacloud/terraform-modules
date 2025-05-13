@@ -10,10 +10,6 @@ variable "Stage" {
   type        = string
 }
 
-variable "Environment" {
-  type = string
-}
-
 variable "VpcId" {
   type = string
 }

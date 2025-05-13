@@ -10,10 +10,6 @@ variable "Stage" {
   type        = string
 }
 
-variable "Environment" {
-  type        = string
-}
-
 variable "Vpc" {
   type = object({
     Cidr        = string

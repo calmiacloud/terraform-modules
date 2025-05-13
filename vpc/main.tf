@@ -11,7 +11,6 @@ resource "aws_vpc" "vpc" {
     Name        = "Vpc${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -31,7 +30,6 @@ resource "aws_subnet" "subnet_public" {
     Name        = "SubnetPublic${var.Subnets.Public[count.index].Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -45,7 +43,6 @@ resource "aws_subnet" "subnet_nat" {
     Name        = "SubnetNat${var.Subnets.Nat[count.index].Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -60,7 +57,6 @@ resource "aws_subnet" "subnet_private" {
     Name        = "SubnetPrivate${each.value.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -75,7 +71,6 @@ resource "aws_internet_gateway" "ig_internet" {
     Name        = "GwI${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -86,7 +81,6 @@ resource "aws_eip" "eip_ig_nat" {
     Name        = "EipGwNat${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -98,7 +92,6 @@ resource "aws_nat_gateway" "ig_nat" {
     Name        = "GwNat${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -133,7 +126,6 @@ resource "aws_route_table" "rt_public" {
     Name        = "RtPublic${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -159,7 +151,6 @@ resource "aws_route_table" "rt_nat" {
     Name        = "RtNat${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
@@ -180,7 +171,6 @@ resource "aws_route_table" "rt_private" {
     Name        = "RtPrivate${var.Name}"
     Product     = var.Product
     Stage       = var.Stage
-    Environment = var.Environment
   }
 }
 
