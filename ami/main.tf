@@ -265,7 +265,10 @@ resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
 
 resource "null_resource" "resource_main" {
   triggers = {
-    playbook_md5      = filemd5(var.Source)
+    playbook_md5 = sha256(join("", [
+      for file in fileset(var.Source, "**/*") :
+      filemd5("${var.Source}/${file}")
+    ]))
     extra_vars_sha256 = sha256(jsonencode(var.ExtraVars))
   }
   depends_on = [
