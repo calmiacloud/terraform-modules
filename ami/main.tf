@@ -13,12 +13,12 @@ resource "aws_s3_bucket" "bucket" {
   }
 }
 
-resource "aws_s3_object" "object" {
+resource "aws_s3_object" "objects" {
+  for_each = { for file in fileset(var.Source, "**/*") : file => file }
   bucket = aws_s3_bucket.bucket.bucket
-  key    = "playbook.yml"
-  source = var.Playbook
-  etag   = filemd5(var.Playbook)
-  force_destroy = true
+  key    = "playbook/${each.key}"
+  source = "${var.Source}/${each.key}"
+  etag   = filemd5("${var.Source}/${each.key}")
 }
 
 ##############################
@@ -184,7 +184,7 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
     }
     parameter {
       name  = "S3Key"
-      value = aws_s3_object.object.key
+      value = "playbook"
     }
   }
   component {
@@ -265,7 +265,7 @@ resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
 /*
 resource "null_resource" "resource_main" {
   triggers = {
-    playbook_md5      = filemd5(var.Playbook)
+    playbook_md5      = filemd5(var.Source)
     extra_vars_sha256 = sha256(jsonencode(var.ExtraVars))
   }
   depends_on = [

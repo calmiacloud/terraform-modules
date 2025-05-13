@@ -14,7 +14,7 @@ variable "Environment" {
   type        = string
 }
 
-variable "Playbook" {
+variable "Source" {
   type  = string
 }
 

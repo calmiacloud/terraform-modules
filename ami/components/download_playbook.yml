@@ -15,5 +15,5 @@ phases:
         maxAttempts: 3
         inputs:
           - source: "s3://{{ S3Bucket }}/{{ S3Key }}"
-            destination: "/tmp/playbook.yml"
+            destination: "/tmp/playbook"
             overwrite: true
