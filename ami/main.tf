@@ -272,7 +272,7 @@ resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
 ##############################
 # Trigger Block
 ##############################
-/*
+
 resource "null_resource" "resource_main" {
   triggers = {
     playbook_md5      = filemd5(var.Source)
@@ -377,4 +377,4 @@ resource "null_resource" "resource_main" {
       echo ""
     EOT
   }
-}*/
+}
