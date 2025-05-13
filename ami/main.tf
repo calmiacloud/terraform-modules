@@ -52,7 +52,6 @@ resource "aws_iam_policy" "policy_bucket" {
   }
 }
 
-
 resource "aws_iam_role_policy" "policy_imagebuilder" {
   name = "AllowImageBuilderGetComponents"
   role = aws_iam_role.role_ssm.name
