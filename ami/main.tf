@@ -265,7 +265,7 @@ resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
 ##############################
 
 resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
-  name                                = ${var.Name}${random_password.random_id.result}
+  name                             = "${var.Name}${random_password.random_id.result}"
   image_recipe_arn                    = aws_imagebuilder_image_recipe.recipe_main.arn
   infrastructure_configuration_arn    = aws_imagebuilder_infrastructure_configuration.infra_main.arn
   distribution_configuration_arn   = aws_imagebuilder_distribution_configuration.distribution_main.arn
