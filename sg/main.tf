@@ -3,7 +3,7 @@
 ##############################
 
 resource "aws_security_group" "sg" {
-  name        = var.Name
+  name = "${var.Product}${var.Stage}${var.Name}"
   vpc_id      = var.VpcId
   tags = {
     Name        = var.Name
