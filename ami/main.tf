@@ -15,7 +15,7 @@ resource "random_password" "random_id" {
 ##############################
 
 resource "aws_s3_bucket" "bucket" {
-  bucket        = lower("${var.Name}${random_password.random_id.result}")
+  bucket        = lower("amibuilder${var.Name}${random_password.random_id.result}")
   force_destroy = true
   lifecycle {
     precondition {
