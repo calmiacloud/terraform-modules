@@ -7,5 +7,10 @@ data "aws_ami" "data_ami" {
     name   = "name"
     values = ["${var.Product}${var.Stage}${var.Name}*"]
   }
+  filter {
+    name   = "state"
+    values = ["available"]
+  }
   depends_on = [null_resource.resource_main]
 }
+
