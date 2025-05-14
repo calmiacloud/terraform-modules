@@ -1,21 +1,9 @@
-#################################
-# Random String Block
-##################################
-
-resource "random_password" "random_id" {
-  length           = 6
-  upper            = false
-  lower            = true
-  numeric          = true
-  special          = false
-}
-
 ##############################
 # Security Group
 ##############################
 
 resource "aws_security_group" "sg" {
-  name        = "${var.Name}${random_password.random_id.result}"
+  name        = var.Name
   vpc_id      = var.VpcId
   tags = {
     Name        = var.Name

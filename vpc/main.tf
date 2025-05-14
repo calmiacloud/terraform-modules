@@ -1,15 +1,3 @@
-#################################
-# Random String Block
-##################################
-
-resource "random_password" "random_id" {
-  length           = 6
-  upper            = false
-  lower            = true
-  numeric          = true
-  special          = false
-}
-
 ##############################
 # VPC Block
 ##############################

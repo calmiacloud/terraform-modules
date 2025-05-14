@@ -1,21 +1,9 @@
-#################################
-# Random String Block
-##################################
-
-resource "random_password" "random_id" {
-  length           = 6
-  upper            = false
-  lower            = true
-  numeric          = true
-  special          = false
-}
-
 ##############################
 # Roles Block
 ##############################
 
 resource "aws_iam_role" "role_ssm" {
-  name = "${var.Name}${random_password.random_id.result}"
+  name = "Instance${var.Name}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -41,7 +29,7 @@ resource "aws_iam_role" "role_ssm" {
 ##############################
 
 resource "aws_iam_instance_profile" "instanceprofile_ssm" {
-  name = "${var.Name}${random_password.random_id.result}"
+  name = var.Name
   role = aws_iam_role.role_ssm.name
 }
 

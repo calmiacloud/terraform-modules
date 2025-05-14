@@ -43,7 +43,7 @@ resource "aws_s3_object" "objects" {
 ##############################
 
 resource "aws_iam_policy" "policy_bucket" {
-  name   = "${var.Name}${random_password.random_id.result}"
+  name   = "Amibuilder${var.Name}"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement: [
@@ -73,7 +73,7 @@ resource "aws_iam_policy" "policy_bucket" {
 }
 
 resource "aws_iam_role_policy" "policy_imagebuilder" {
-  name = "${var.Name}${random_password.random_id.result}"
+  name = "Amibuilder${var.Name}"
   role = aws_iam_role.role_ssm.name
   policy = jsonencode({
     Version = "2012-10-17"
@@ -104,7 +104,7 @@ resource "aws_iam_role_policy" "policy_imagebuilder" {
 }
 
 resource "aws_iam_role" "role_ssm" {
-  name = "${var.Name}${random_password.random_id.result}"
+  name = "Amibuilder${var.Name}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -127,7 +127,7 @@ resource "aws_iam_role" "role_ssm" {
 }
 
 resource "aws_iam_instance_profile" "instanceprofile_main" {
-  name = "${var.Name}${random_password.random_id.result}"
+  name = "Amibuilder${var.Name}"
   role = aws_iam_role.role_ssm.name
 }
 
@@ -136,7 +136,7 @@ resource "aws_iam_instance_profile" "instanceprofile_main" {
 ##############################
 
 resource "aws_imagebuilder_component" "component_basicpackages" {
-  name = "BasicPackages${var.Name}${random_password.random_id.result}"
+  name = "BasicPackages${var.Name}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/basic_packages.yml")
@@ -148,7 +148,7 @@ resource "aws_imagebuilder_component" "component_basicpackages" {
 }
 
 resource "aws_imagebuilder_component" "component_installansible" {
-  name = "InstallAnsible${var.Name}${random_password.random_id.result}"
+  name = "InstallAnsible${var.Name}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/install_ansible.yml")
@@ -160,7 +160,7 @@ resource "aws_imagebuilder_component" "component_installansible" {
 }
 
 resource "aws_imagebuilder_component" "component_downloadplaybook" {
-  name = "DownloadPlaybook${var.Name}${random_password.random_id.result}"
+  name = "DownloadPlaybook${var.Name}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/download_playbook.yml")
@@ -172,7 +172,7 @@ resource "aws_imagebuilder_component" "component_downloadplaybook" {
 }
 
 resource "aws_imagebuilder_component" "component_runplaybookreboot" {
-  name = "RunPlaybook${var.Name}${random_password.random_id.result}"
+  name = "RunPlaybook${var.Name}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/run_playbook_reboot.yml")
@@ -188,7 +188,7 @@ resource "aws_imagebuilder_component" "component_runplaybookreboot" {
 ##############################
 
 resource "aws_imagebuilder_image_recipe" "recipe_main" {
-  name = "${var.Name}${random_password.random_id.result}"
+  name = "${var.Name}"
   version      = "1.0.0"
   parent_image = var.Instance.ParentImage
   component { component_arn = aws_imagebuilder_component.component_basicpackages.arn }
@@ -228,7 +228,7 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
 ##############################
 
 resource "aws_imagebuilder_infrastructure_configuration" "infra_main" {
-  name = "${var.Name}${random_password.random_id.result}"
+  name = "${var.Name}"
   instance_profile_name = aws_iam_instance_profile.instanceprofile_main.name
   instance_types       = [var.Instance.InstanceType]
   subnet_id            = var.Instance.Subnet
@@ -241,11 +241,11 @@ resource "aws_imagebuilder_infrastructure_configuration" "infra_main" {
 ##############################
 
 resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
-  name = "${var.Name}${random_password.random_id.result}"
+  name = "${var.Name}"
   distribution {
     region = data.aws_region.current.name
     ami_distribution_configuration {
-      name        = "${var.Name}${random_password.random_id.result}{{ imagebuilder:buildDate }}"
+      name        = "${var.Name}{{ imagebuilder:buildDate }}"
       ami_tags = {
         Name        = var.Name
         Product     = var.Product
@@ -265,7 +265,7 @@ resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
 ##############################
 
 resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
-  name                             = "${var.Name}${random_password.random_id.result}"
+  name                             = "${var.Name}"
   image_recipe_arn                    = aws_imagebuilder_image_recipe.recipe_main.arn
   infrastructure_configuration_arn    = aws_imagebuilder_infrastructure_configuration.infra_main.arn
   distribution_configuration_arn   = aws_imagebuilder_distribution_configuration.distribution_main.arn
@@ -295,6 +295,6 @@ resource "null_resource" "resource_main" {
     aws_imagebuilder_image_pipeline.pipeline_main
   ]
   provisioner "local-exec" {
-    command = "bash ${path.module}/src/runpipeline.sh ${aws_imagebuilder_image_pipeline.pipeline_main.arn} ${var.Name}${random_password.random_id.result}"
+    command = "bash ${path.module}/src/runpipeline.sh ${aws_imagebuilder_image_pipeline.pipeline_main.arn} ${var.Name}"
   }
 }
