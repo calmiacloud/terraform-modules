@@ -18,7 +18,7 @@ resource "aws_security_group" "sg" {
   name        = "${var.Name}${random_password.random_id.result}"
   vpc_id      = var.VpcId
   tags = {
-    Name        = "Sg${var.Name}"
+    Name        = var.Name
     Product     = var.Product
     Stage       = var.Stage
   }
