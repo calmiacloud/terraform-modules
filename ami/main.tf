@@ -282,7 +282,7 @@ resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
 ##############################
 # Trigger Block
 ##############################
-
+/*
 resource "null_resource" "resource_main" {
   triggers = {
     playbook_md5 = sha256(join("", [
@@ -298,3 +298,4 @@ resource "null_resource" "resource_main" {
     command = "bash ${path.module}/src/runpipeline.sh ${aws_imagebuilder_image_pipeline.pipeline_main.arn} ${var.Name}"
   }
 }
+*/
