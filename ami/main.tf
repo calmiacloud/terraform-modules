@@ -136,7 +136,7 @@ resource "aws_iam_instance_profile" "instanceprofile_main" {
 ##############################
 
 resource "aws_imagebuilder_component" "component_basicpackages" {
-  name = "${var.Name}${random_password.random_id.result}"
+  name = "BasicPackages${var.Name}${random_password.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/basic_packages.yml")
@@ -148,7 +148,7 @@ resource "aws_imagebuilder_component" "component_basicpackages" {
 }
 
 resource "aws_imagebuilder_component" "component_installansible" {
-  name = "${var.Name}${random_password.random_id.result}"
+  name = "InstallAnsible${var.Name}${random_password.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/install_ansible.yml")
@@ -160,7 +160,7 @@ resource "aws_imagebuilder_component" "component_installansible" {
 }
 
 resource "aws_imagebuilder_component" "component_downloadplaybook" {
-  name = "${var.Name}${random_password.random_id.result}"
+  name = "DownloadPlaybook${var.Name}${random_password.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/download_playbook.yml")
@@ -172,7 +172,7 @@ resource "aws_imagebuilder_component" "component_downloadplaybook" {
 }
 
 resource "aws_imagebuilder_component" "component_runplaybookreboot" {
-  name = "${var.Name}${random_password.random_id.result}"
+  name = "RunPlaybook${var.Name}${random_password.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/run_playbook_reboot.yml")
