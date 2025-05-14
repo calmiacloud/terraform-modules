@@ -11,7 +11,7 @@ echo ""
 
 DESCRIBE_AMIS=$(aws ec2 describe-images \
   --filters \
-    "Name=name,Values=Ami${NAME}-*" \
+    "Name=name,Values=${NAME}-*" \
     "Name=state,Values=available" \
   --query 'Images[*].ImageId' \
   --output text)
@@ -28,9 +28,9 @@ if [ -n "$DESCRIBE_AMIS" ]; then
       --output text)
 
     aws imagebuilder delete-image \
-      --image-build-version-arn "$IMAGE_RESOURCE_ARN" --region "$REGION" || exit 1
+      --image-build-version-arn "$IMAGE_RESOURCE_ARN" || exit 1
 
-    aws ec2 deregister-image --image-id "$ami" --region "$REGION"
+    aws ec2 deregister-image --image-id "$ami"
 
     SNAPSHOTS=$(aws ec2 describe-images \
       --image-ids "$ami" \
@@ -41,7 +41,7 @@ if [ -n "$DESCRIBE_AMIS" ]; then
       if [ "$snap" != "None" ]; then
         echo ""
         echo -e "\e[33m ==> Deleting snapshot: $snap\e[0m"
-        aws ec2 delete-snapshot --snapshot-id "$snap" --region "$REGION"
+        aws ec2 delete-snapshot --snapshot-id "$snap"
       fi
     done
   done
