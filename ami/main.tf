@@ -1,18 +1,30 @@
+#################################
+# Random String Block
+##################################
+
+resource "random_password" "random_id" {
+  length           = 6
+  upper            = false
+  lower            = true
+  numeric          = true
+  special          = false
+}
+
 ##############################
 # Bucket
 ##############################
 
 resource "aws_s3_bucket" "bucket" {
-  bucket        = lower("BucketAmi${var.Name}${var.Stage}")
+  bucket        = lower("${var.Name}${random_password.random_id.result}")
   force_destroy = true
   lifecycle {
     precondition {
       condition     = contains(fileset(var.Source, "**/*"), "main.yml")
-      error_message = "main.yml no se encontró en ${var.Source}. Abortando la creación del bucket."
+      error_message = "main.yml not found in ${var.Source}"
     }
   }
   tags = {
-    Name        = "BucketAmi${var.Name}"
+    Name        = var.Name
     Product     = var.Product
     Stage       = var.Stage
   }
@@ -31,7 +43,7 @@ resource "aws_s3_object" "objects" {
 ##############################
 
 resource "aws_iam_policy" "policy_bucket" {
-  name   = "PolicyBucketAmi${var.Name}${var.Stage}"
+  name   = "${var.Name}${random_password.random_id.result}"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement: [
@@ -54,14 +66,14 @@ resource "aws_iam_policy" "policy_bucket" {
   })
 
   tags = {
-    Name        = "PolicyBucketAmi${var.Name}"
+    Name        = var.Name
     Product     = var.Product
     Stage       = var.Stage
   }
 }
 
 resource "aws_iam_role_policy" "policy_imagebuilder" {
-  name = "AllowImageBuilderGetComponents"
+  name = "${var.Name}${random_password.random_id.result}"
   role = aws_iam_role.role_ssm.name
   policy = jsonencode({
     Version = "2012-10-17"
@@ -92,7 +104,7 @@ resource "aws_iam_role_policy" "policy_imagebuilder" {
 }
 
 resource "aws_iam_role" "role_ssm" {
-  name   = "RoleSsmAmi${var.Name}${var.Stage}"
+  name = "${var.Name}${random_password.random_id.result}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -108,14 +120,14 @@ resource "aws_iam_role" "role_ssm" {
     aws_iam_policy.policy_bucket.arn,
   ]
   tags = {
-    Name        = "PolicySsmAmi${var.Name}"
+    Name        = var.Name
     Product     = var.Product
     Stage       = var.Stage
   }
 }
 
 resource "aws_iam_instance_profile" "instanceprofile_main" {
-  name = "InstanceprofileAmi${var.Name}${var.Stage}"
+  name = "${var.Name}${random_password.random_id.result}"
   role = aws_iam_role.role_ssm.name
 }
 
@@ -124,48 +136,48 @@ resource "aws_iam_instance_profile" "instanceprofile_main" {
 ##############################
 
 resource "aws_imagebuilder_component" "component_basicpackages" {
-  name     = "AmiComponentBasicPackages${var.Name}${var.Stage}"
+  name = "${var.Name}${random_password.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/basic_packages.yml")
   tags = {
-    Name        = "AmiComponentBasicPackages${var.Name}"
+    Name        = var.Name
     Product     = var.Product
     Stage       = var.Stage
   }
 }
 
 resource "aws_imagebuilder_component" "component_installansible" {
-  name     = "AmiComponentAnsible${var.Name}${var.Stage}"
+  name = "${var.Name}${random_password.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/install_ansible.yml")
   tags = {
-    Name        = "AmiComponentAnsible${var.Name}"
+    Name        = var.Name
     Product     = var.Product
     Stage       = var.Stage
   }
 }
 
 resource "aws_imagebuilder_component" "component_downloadplaybook" {
-  name     = "AmiComponentDownloadPlaybook${var.Name}${var.Stage}"
+  name = "${var.Name}${random_password.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/download_playbook.yml")
   tags = {
-    Name        = "AmiComponentDownloadPlaybook${var.Name}"
+    Name        = var.Name
     Product     = var.Product
     Stage       = var.Stage
   }
 }
 
 resource "aws_imagebuilder_component" "component_runplaybookreboot" {
-  name             = "AmiComponentRunPlaybookReboot${var.Name}${var.Stage}"
+  name = "${var.Name}${random_password.random_id.result}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/run_playbook_reboot.yml")
   tags = {
-    Name        = "AmiComponentRunPlaybookReboot${var.Name}"
+    Name        = var.Name
     Product     = var.Product
     Stage       = var.Stage
   }
@@ -176,7 +188,7 @@ resource "aws_imagebuilder_component" "component_runplaybookreboot" {
 ##############################
 
 resource "aws_imagebuilder_image_recipe" "recipe_main" {
-  name         = "AmiRecipe${var.Name}${var.Stage}"
+  name = "${var.Name}${random_password.random_id.result}"
   version      = "1.0.0"
   parent_image = var.Instance.ParentImage
   component { component_arn = aws_imagebuilder_component.component_basicpackages.arn }
@@ -205,7 +217,7 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
     }
   }
   tags = {
-    Name        = "AmiRecipe${var.Name}"
+    Name        = var.Name
     Product     = var.Product
     Stage       = var.Stage
   }
@@ -216,7 +228,7 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
 ##############################
 
 resource "aws_imagebuilder_infrastructure_configuration" "infra_main" {
-  name                 = "AmiInfra${var.Name}${var.Stage}"
+  name = "${var.Name}${random_password.random_id.result}"
   instance_profile_name = aws_iam_instance_profile.instanceprofile_main.name
   instance_types       = [var.Instance.InstanceType]
   subnet_id            = var.Instance.Subnet
@@ -229,14 +241,15 @@ resource "aws_imagebuilder_infrastructure_configuration" "infra_main" {
 ##############################
 
 resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
-  name = "AmiDistribution${var.Name}${var.Stage}"
+  name = "${var.Name}${random_password.random_id.result}"
   distribution {
     region = data.aws_region.current.name
     ami_distribution_configuration {
-      name        = "Ami${var.Name}${var.Stage}-{{ imagebuilder:buildDate }}"
+      name        = "${var.Name}${random_password.random_id.result}{{ imagebuilder:buildDate }}"
       ami_tags = {
         Name        = var.Name
         Product     = var.Product
+        Stage       = var.Stage
       }
     }
   }
@@ -252,7 +265,7 @@ resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
 ##############################
 
 resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
-  name                                = "AmiPipeline${var.Name}${var.Stage}"
+  name                                = ${var.Name}${random_password.random_id.result}
   image_recipe_arn                    = aws_imagebuilder_image_recipe.recipe_main.arn
   infrastructure_configuration_arn    = aws_imagebuilder_infrastructure_configuration.infra_main.arn
   distribution_configuration_arn   = aws_imagebuilder_distribution_configuration.distribution_main.arn
@@ -282,6 +295,6 @@ resource "null_resource" "resource_main" {
     aws_imagebuilder_image_pipeline.pipeline_main
   ]
   provisioner "local-exec" {
-    command = "bash ${path.module}/src/runpipeline.sh ${aws_imagebuilder_image_pipeline.pipeline_main.arn} ${var.Name} ${var.Stage}"
+    command = "bash ${path.module}/src/runpipeline.sh ${aws_imagebuilder_image_pipeline.pipeline_main.arn} ${var.Name}"
   }
 }

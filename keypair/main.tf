@@ -1,17 +1,24 @@
 #################################
+# Random String Block
+##################################
+
+resource "random_password" "random_id" {
+  length           = 6
+  upper            = false
+  lower            = true
+  numeric          = true
+  special          = false
+}
+
+#################################
 # SSH Block
 ##################################
 
-#resource "tls_private_key" "sshpair" {
-#  algorithm = "RSA"
-#  rsa_bits  = 4096
-#}
-
 resource "aws_key_pair" "keypair" {
-  key_name   = "${var.Name}${var.Stage}"
+  key_name   = "${var.Name}${random_password.random_id.result}"
   public_key = base64decode(var.PublicKeyB64)
   tags = {
-    Name        = "vpc-${var.Name}"
+    Name        = var.Name
     Product     = var.Product
     Stage       = var.Stage
   }

@@ -4,15 +4,14 @@ set -euo pipefail
 
 PIPELINE_ARN="$1"
 NAME="$2"
-STAGE="$3"
 
 echo ""
-echo -e "\e[33m ==> Searching AMIs with name: Ami${NAME}${STAGE}-*\e[0m"
+echo -e "\e[33m ==> Searching AMIs with name: Ami${NAME}*\e[0m"
 echo ""
 
 DESCRIBE_AMIS=$(aws ec2 describe-images \
   --filters \
-    "Name=name,Values=Ami${NAME}${STAGE}-*" \
+    "Name=name,Values=Ami${NAME}-*" \
     "Name=state,Values=available" \
   --query 'Images[*].ImageId' \
   --output text)
