@@ -283,6 +283,6 @@ resource "null_resource" "resource_main" {
     aws_imagebuilder_image_pipeline.pipeline_main
   ]
   provisioner "local-exec" {
-    command = "bash ${path.module}/src/runpipeline.sh ${aws_imagebuilder_image_pipeline.pipeline_main.arn} "${var.Product}${var.Stage}${var.Name}"
+    command = format("bash %s/src/runpipeline.sh %s \"%s\"", path.module, aws_imagebuilder_image_pipeline.pipeline_main.arn, "${var.Product}${var.Stage}${var.Name}")
   }
 }
