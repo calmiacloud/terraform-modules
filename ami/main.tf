@@ -283,18 +283,18 @@ resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
 # Trigger Block
 ##############################
 
-#resource "null_resource" "resource_main" {
-#  triggers = {
-#    playbook_md5 = sha256(join("", [
-#      for file in fileset(var.Source, "**/*") :
-#      filemd5("${var.Source}/${file}")
-#    ]))
-#    extra_vars_sha256 = sha256(jsonencode(var.ExtraVars))
-#  }
-#  depends_on = [
-#    aws_imagebuilder_image_pipeline.pipeline_main
-#  ]
-#  provisioner "local-exec" {
-#    command = "bash ${path.module}/src/runpipeline.sh ${aws_imagebuilder_image_pipeline.pipeline_main.arn} ${var.Name}"
-#  }
-#}
+resource "null_resource" "resource_main" {
+  triggers = {
+    playbook_md5 = sha256(join("", [
+      for file in fileset(var.Source, "**/*") :
+      filemd5("${var.Source}/${file}")
+    ]))
+    extra_vars_sha256 = sha256(jsonencode(var.ExtraVars))
+  }
+  depends_on = [
+    aws_imagebuilder_image_pipeline.pipeline_main
+  ]
+  provisioner "local-exec" {
+    command = "bash ${path.module}/src/runpipeline.sh ${aws_imagebuilder_image_pipeline.pipeline_main.arn} ${var.Name}${random_password.random_id.result}"
+  }
+}
