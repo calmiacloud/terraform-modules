@@ -16,6 +16,9 @@ DESCRIBE_AMIS=$(aws ec2 describe-images \
   --query 'Images[*].ImageId' \
   --output text)
 
+echo $DESCRIBE_AMIS;
+exit
+
 if [ -n "$DESCRIBE_AMIS" ]; then
   for ami in $DESCRIBE_AMIS; do
     echo ""
