@@ -6,18 +6,16 @@ PIPELINE_ARN="$1"
 NAME="$2"
 
 echo ""
-echo -e "\e[33m ==> Searching AMIs with name: Ami${NAME}*\e[0m"
+echo -e "\e[33m ==> Searching AMIs with name: ${NAME}*\e[0m"
 echo ""
 
 DESCRIBE_AMIS=$(aws ec2 describe-images \
   --filters \
-    "Name=name,Values=${NAME}-*" \
+    "Name=name,Values=${NAME}*" \
     "Name=state,Values=available" \
+  --owners self \
   --query 'Images[*].ImageId' \
   --output text)
-
-echo $DESCRIBE_AMIS;
-exit
 
 if [ -n "$DESCRIBE_AMIS" ]; then
   for ami in $DESCRIBE_AMIS; do
