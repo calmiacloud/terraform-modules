@@ -38,10 +38,15 @@ if [ -n "$IMAGEBUILDER_VERSION_ARN" ]; then
 
   echo -e "\e[33m ==> Scanning Ami Snapshot...\e[0m"
 
+  AMI_ID="ami-0973bff6aa5f5df8c"
+
   SNAPSHOT_ID=$(aws ec2 describe-images \
     --image-ids "$AMI_ID" \
     --query 'Images[0].BlockDeviceMappings[0].Ebs.SnapshotId' \
     --output text)
+
+  echo $SNAPSHOT_ID;
+  exit;
 
   if [ -z "$SNAPSHOT_ID" ] || [ "$SNAPSHOT_ID" = "None" ]; then
     echo -e "\e[31m==> ❌ Halted Script, no snapshot found related to AMI $AMI_ID.\e[0m"
