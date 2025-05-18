@@ -33,7 +33,7 @@ if [ -n "$IMAGEBUILDER_VERSION_ARN" ]; then
     --output text)
 
   echo -e "\e[33m ==> Deregistering AMI: $AMI_ID\e[0m"
-  aws ec2 deregister-image --image-id "$AMI_ID"
+ # aws ec2 deregister-image --image-id "$AMI_ID"
   echo -e "\e[33m ==> Deregistered AMI: $AMI_ID\e[0m"
 
   echo -e "\e[33m ==> Scanning Ami Snapshot...\e[0m"
