@@ -26,7 +26,7 @@ if [ -n "$IMAGEBUILDER_VERSION_ARN" ] && [ "$IMAGEBUILDER_VERSION_ARN" != "None"
 
   echo -e "\e[33m ==> Pipeline Version found, ARN: $IMAGEBUILDER_VERSION_ARN\e[0m"
 
- echo -e "\e[33m ==> Scanning Ami Snapshot...\e[0m"
+  echo -e "\e[33m ==> Scanning Ami Snapshot...\e[0m"
 
   SNAPSHOT_ID=$(aws ec2 describe-images \
     --image-ids "$AMI_ID" \
@@ -69,6 +69,7 @@ PIPELINE=$(aws imagebuilder start-image-pipeline-execution \
   --output text) || exit 1
 
 echo -e "\e[33m ==> Pipeline started: $PIPELINE\e[0m"
+START_TIME=$(date +%s)
 
 while true; do
   STATUS=$(aws imagebuilder get-image \
@@ -88,7 +89,15 @@ while true; do
       exit 1
       ;;
     *)
-      echo -e "\e[33m ==> Waiting 30s...\e[0m"
+      # Calcula tiempo transcurrido
+      NOW=$(date +%s)
+      ELAPSED=$((NOW - START_TIME))
+      # Formatea hh:mm:ss
+      HH=$((ELAPSED/3600))
+      MM=$(((ELAPSED%3600)/60))
+      SS=$((ELAPSED%60))
+      printf -v ET "%02d:%02d:%02d" "$HH" "$MM" "$SS"
+      echo -e "\e[33m ==> Waiting 30s... (elapsed: $ET)\e[0m"
       sleep 30
       ;;
   esac
