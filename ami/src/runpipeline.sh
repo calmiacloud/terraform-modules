@@ -25,28 +25,12 @@ if [ -n "$IMAGEBUILDER_VERSION_ARN" ]; then
 
   echo -e "\e[33m ==> Pipeline Version found, ARN: $IMAGEBUILDER_VERSION_ARN\e[0m"
 
-  AMI_ID=$(
-  aws imagebuilder list-image-pipeline-images \
-    --image-pipeline-arn "$PIPELINE_ARN" \
-    --no-paginate \
-    --query 'imageSummaryList[0].outputResources.amis[0].image' \
-    --output text)
+ echo -e "\e[33m ==> Scanning Ami Snapshot...\e[0m"
 
-  echo -e "\e[33m ==> Deregistering AMI: $AMI_ID\e[0m"
- # aws ec2 deregister-image --image-id "$AMI_ID"
-  echo -e "\e[33m ==> Deregistered AMI: $AMI_ID\e[0m"
-
-  echo -e "\e[33m ==> Scanning Ami Snapshot...\e[0m"
-
-  AMI_ID="ami-0973bff6aa5f5df8c"
-
-    SNAPSHOT_ID=$(aws ec2 describe-images \
+  SNAPSHOT_ID=$(aws ec2 describe-images \
     --image-ids "$AMI_ID" \
     --query 'Images[].BlockDeviceMappings[].Ebs.SnapshotId' \
     --output text)
-
-  echo $SNAPSHOT_ID;
-  exit;
 
   if [ -z "$SNAPSHOT_ID" ] || [ "$SNAPSHOT_ID" = "None" ]; then
     echo -e "\e[31m==> ❌ Halted Script, no snapshot found related to AMI $AMI_ID.\e[0m"
@@ -56,6 +40,17 @@ if [ -n "$IMAGEBUILDER_VERSION_ARN" ]; then
   echo -e "\e[33m ==> Removing Ami Snapshot $SNAPSHOT_ID...\e[0m"
   aws ec2 delete-snapshot --snapshot-id "$SNAPSHOT_ID"
   echo -e "\e[33m ==> Removed Ami Snapshot $SNAPSHOT_ID...\e[0m"
+
+  AMI_ID=$(
+  aws imagebuilder list-image-pipeline-images \
+    --image-pipeline-arn "$PIPELINE_ARN" \
+    --no-paginate \
+    --query 'imageSummaryList[0].outputResources.amis[0].image' \
+    --output text)
+
+  echo -e "\e[33m ==> Deregistering AMI: $AMI_ID\e[0m"
+  aws ec2 deregister-image --image-id "$AMI_ID"
+  echo -e "\e[33m ==> Deregistered AMI: $AMI_ID\e[0m"
 
   echo -e "\e[33m ==> Removing image Builder Version  $IMAGEBUILDER_VERSION_ARN...\e[0m"
   aws imagebuilder delete-image --image-build-version-arn "$IMAGEBUILDER_VERSION_ARN"
