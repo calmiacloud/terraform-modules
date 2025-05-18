@@ -21,7 +21,8 @@ IMAGEBUILDER_VERSION_ARN=$(
     --output text)
 
 # Pipeline version found
-if [ -n "$IMAGEBUILDER_VERSION_ARN" ]; then
+
+if [ -n "$IMAGEBUILDER_VERSION_ARN" ] || [ "$IMAGEBUILDER_VERSION_ARN" != "None" ]; then
 
   echo -e "\e[33m ==> Pipeline Version found, ARN: $IMAGEBUILDER_VERSION_ARN\e[0m"
 
