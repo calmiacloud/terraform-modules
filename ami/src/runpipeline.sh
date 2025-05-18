@@ -40,9 +40,9 @@ if [ -n "$IMAGEBUILDER_VERSION_ARN" ]; then
 
   AMI_ID="ami-0973bff6aa5f5df8c"
 
-  SNAPSHOT_ID=$(aws ec2 describe-images \
+    SNAPSHOT_ID=$(aws ec2 describe-images \
     --image-ids "$AMI_ID" \
-    --query 'Images[0].BlockDeviceMappings[0].Ebs.SnapshotId' \
+    --query 'Images[].BlockDeviceMappings[].Ebs.SnapshotId' \
     --output text)
 
   echo $SNAPSHOT_ID;
