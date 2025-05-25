@@ -1,12 +1,12 @@
+variable "tags" {
+  type = object({
+    Project = string
+    Repo    = string
+    Stage   = string
+  })
+}
+
 variable "Name" {
-  type        = string
-}
-
-variable "Product" {
-  type        = string
-}
-
-variable "Stage" {
   type        = string
 }
 
