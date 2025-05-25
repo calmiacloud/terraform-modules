@@ -17,11 +17,12 @@ resource "aws_iam_role" "role_ssm" {
   managed_policy_arns = [
     "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   ]
-  tags = {
-    Name        = var.Name
-    Product     = var.Product
-    Stage       = var.Stage
-  }
+  tags = merge(
+    {
+      Name = var.Name
+    },
+    var.tags
+  )
 }
 
 ##############################
@@ -44,16 +45,18 @@ resource "aws_instance" "instance" {
   vpc_security_group_ids      = [var.SecurityGroup]
   key_name                    = var.KeyPair
   iam_instance_profile        = aws_iam_instance_profile.instanceprofile_ssm.name
-  tags = {
-    Name        = var.Name
-    Product     = var.Product
-    Stage       = var.Stage
-  }
+  tags = merge(
+    {
+      Name = var.Name
+    },
+    var.tags
+  )
   root_block_device {
-    tags = {
-      Name        = var.Name
-      Product     = var.Product
-      Stage       = var.Stage
-    }
+    tags = merge(
+      {
+        Name = var.Name
+      },
+      var.tags
+    )
   }
 }
