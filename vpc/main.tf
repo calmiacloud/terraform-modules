@@ -7,11 +7,12 @@ resource "aws_vpc" "vpc" {
   enable_dns_support             = true
   enable_dns_hostnames           = var.Vpc.DnsSupport
   assign_generated_ipv6_cidr_block = var.Vpc.Ipv6Support
-  tags = {
-    Name        = var.Name
-    Product     = var.Product
-    Stage       = var.Stage
-  }
+  tags = merge(
+    {
+      Name = var.Name
+    },
+    var.tags
+  )
 }
 
 ##############################
@@ -26,11 +27,12 @@ resource "aws_subnet" "subnet_public" {
   map_public_ip_on_launch = true
   ipv6_cidr_block = var.Vpc.Ipv6Support ? cidrsubnet(aws_vpc.vpc.ipv6_cidr_block, 8, count.index) : null
   assign_ipv6_address_on_creation = var.Vpc.Ipv6Support ? true : null
-  tags = {
-    Name        = var.Subnets.Public[count.index].Name
-    Product     = var.Product
-    Stage       = var.Stage
-  }
+  tags = merge(
+    {
+      Name = var.Subnets.Public[count.index].Name
+    },
+    var.tags
+  )
 }
 
 resource "aws_subnet" "subnet_nat" {
@@ -39,11 +41,12 @@ resource "aws_subnet" "subnet_nat" {
   cidr_block              = var.Subnets.Nat[count.index].Cidr
   availability_zone       = element(data.aws_availability_zones.available.names, count.index)
   map_public_ip_on_launch = false
-  tags = {
-    Name        = var.Subnets.Nat[count.index].Name
-    Product     = var.Product
-    Stage       = var.Stage
-  }
+  tags = merge(
+    {
+      Name =var.Subnets.Nat[count.index].Name
+    },
+    var.tags
+  )
 }
 
 resource "aws_subnet" "subnet_private" {
@@ -53,11 +56,12 @@ resource "aws_subnet" "subnet_private" {
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = each.value.Cidr
   availability_zone = element(data.aws_availability_zones.available.names, 0) # ajusta si tienes varias AZs
-  tags = {
-    Name        = each.value.Name
-    Product     = var.Product
-    Stage       = var.Stage
-  }
+  tags = merge(
+    {
+      Name = each.value.Name
+    },
+    var.tags
+  )
 }
 
 ##############################
@@ -67,32 +71,35 @@ resource "aws_subnet" "subnet_private" {
 resource "aws_internet_gateway" "ig_internet" {
   count  = length(var.Subnets.Public) > 0 ? 1 : 0
   vpc_id = aws_vpc.vpc.id
-  tags = {
-    Name        = var.Name
-    Product     = var.Product
-    Stage       = var.Stage
-  }
+  tags = merge(
+    {
+      Name = var.Name
+    },
+    var.tags
+  )
 }
 
 resource "aws_eip" "eip_ig_nat" {
   count  = length(var.Subnets.Nat) > 0 ? 1 : 0
   domain = "vpc"
-  tags = {
-    Name        = var.Name
-    Product     = var.Product
-    Stage       = var.Stage
-  }
+  tags = merge(
+    {
+      Name = var.Name
+    },
+    var.tags
+  )
 }
 
 resource "aws_nat_gateway" "ig_nat" {
   count         = length(var.Subnets.Nat) > 0 ? 1 : 0
   allocation_id = aws_eip.eip_ig_nat[0].id
   subnet_id     = aws_subnet.subnet_public[0].id
-  tags = {
-    Name        = var.Name
-    Product     = var.Product
-    Stage       = var.Stage
-  }
+  tags = merge(
+    {
+      Name = var.Name
+    },
+    var.tags
+  )
 }
 
 #################################
@@ -122,11 +129,12 @@ resource "aws_route_table" "rt_public" {
       network_interface_id      = route.value.Type == "NetworkInterface"      ? route.value.Target : null
     }
   }
-  tags = {
-    Name        = var.Name
-    Product     = var.Product
-    Stage       = var.Stage
-  }
+  tags = merge(
+    {
+      Name = var.Name
+    },
+    var.tags
+  )
 }
 
 resource "aws_route_table" "rt_nat" {
@@ -147,11 +155,12 @@ resource "aws_route_table" "rt_nat" {
       network_interface_id      = route.value.Type == "NetworkInterface"      ? route.value.Target : null
     }
   }
-  tags = {
-    Name        = var.Name
-    Product     = var.Product
-    Stage       = var.Stage
-  }
+  tags = merge(
+    {
+      Name = var.Name
+    },
+    var.tags
+  )
 }
 
 # 3) Privada
@@ -167,11 +176,12 @@ resource "aws_route_table" "rt_private" {
       network_interface_id      = route.value.Type == "NetworkInterface"      ? route.value.Target : null
     }
   }
-  tags = {
-    Name        = var.Name
-    Product     = var.Product
-    Stage       = var.Stage
-  }
+  tags = merge(
+    {
+      Name = var.Name
+    },
+    var.tags
+  )
 }
 
 #################################
