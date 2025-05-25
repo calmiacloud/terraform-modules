@@ -5,11 +5,12 @@
 resource "aws_security_group" "sg" {
   name = "${var.Product}${var.Stage}${var.Name}"
   vpc_id      = var.VpcId
-  tags = {
-    Name        = var.Name
-    Product     = var.Product
-    Stage       = var.Stage
-  }
+  tags = merge(
+    {
+      Name = var.Name
+    },
+    var.tags
+  )
 }
 
 ##############################
