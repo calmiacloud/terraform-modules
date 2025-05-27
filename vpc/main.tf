@@ -28,7 +28,7 @@ resource "aws_subnet" "subnet_public" {
     {
       Name = var.Subnets.Public[count.index].Name
     },
-    var.tags
+    var.Tags
   )
 }
 
@@ -42,7 +42,7 @@ resource "aws_subnet" "subnet_nat" {
     {
       Name =var.Subnets.Nat[count.index].Name
     },
-    var.tags
+    var.Tags
   )
 }
 
@@ -57,7 +57,7 @@ resource "aws_subnet" "subnet_private" {
     {
       Name = each.value.Name
     },
-    var.tags
+    var.Tags
   )
 }
 

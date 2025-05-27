@@ -50,7 +50,7 @@ resource "aws_instance" "instance" {
       {
         Name = var.Name
       },
-      var.tags
+      var.Tags
     )
   }
 }

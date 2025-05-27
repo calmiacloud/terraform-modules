@@ -221,7 +221,7 @@ resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
         {
           Name = var.Name
         },
-        var.tags
+        var.Tags
       )
     }
   }
