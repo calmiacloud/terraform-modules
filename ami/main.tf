@@ -6,7 +6,7 @@ resource "random_string" "random_bucket" {
   length  = 8
   upper   = false
   lower   = true
-  number  = true
+  numeric  = true
   special = false
 }
 
