@@ -2,8 +2,16 @@
 # Bucket
 ##############################
 
+resource "random_string" "random_bucket" {
+  length  = 10
+  upper   = true
+  lower   = true
+  number  = true
+  special = false
+}
+
 resource "aws_s3_bucket" "bucket" {
-  bucket        = lower("${var.Tags.Project}${var.Tags.Stage}amibuilder${var.Name}")
+  bucket        = lower("${var.Name}-${random_string.random_bucket.result}")
   force_destroy = true
   lifecycle {
     precondition {
@@ -29,7 +37,7 @@ resource "aws_s3_object" "objects" {
 ##############################
 
 resource "aws_iam_policy" "policy_bucket" {
-  name   = "${var.Tags.Project}${var.Tags.Stage}Amibuilder${var.Name}"
+  name   = "${var.Name}"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement: [
@@ -56,7 +64,7 @@ resource "aws_iam_policy" "policy_bucket" {
 }
 
 resource "aws_iam_role_policy" "policy_imagebuilder" {
-  name = "${var.Tags.Project}${var.Tags.Stage}Amibuilder${var.Name}"
+  name = "${var.Name}"
   role = aws_iam_role.role_ssm.name
   policy = jsonencode({
     Version = "2012-10-17"
@@ -87,7 +95,7 @@ resource "aws_iam_role_policy" "policy_imagebuilder" {
 }
 
 resource "aws_iam_role" "role_ssm" {
-  name = "${var.Tags.Project}${var.Tags.Stage}Amibuilder${var.Name}"
+  name = "${var.Name}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -108,7 +116,7 @@ resource "aws_iam_role" "role_ssm" {
 }
 
 resource "aws_iam_instance_profile" "instanceprofile_main" {
-  name = "${var.Tags.Project}${var.Tags.Stage}Amibuilder${var.Name}"
+  name = "${var.Name}"
   role = aws_iam_role.role_ssm.name
 }
 
@@ -161,7 +169,7 @@ resource "aws_imagebuilder_component" "component_runplaybookreboot" {
 ##############################
 
 resource "aws_imagebuilder_image_recipe" "recipe_main" {
-  name = "${var.Tags.Project}${var.Tags.Stage}${var.Name}"
+  name = "${var.Name}"
   version      = "1.0.0"
   parent_image = var.Instance.ParentImage
   component { component_arn = aws_imagebuilder_component.component_basicpackages.arn }
@@ -199,7 +207,7 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
 ##############################
 
 resource "aws_imagebuilder_infrastructure_configuration" "infra_main" {
-  name = "${var.Tags.Project}${var.Tags.Stage}${var.Name}"
+  name = "${var.Name}"
   instance_profile_name = aws_iam_instance_profile.instanceprofile_main.name
   instance_types       = [var.Instance.InstanceType]
   subnet_id            = var.Instance.Subnet
@@ -212,17 +220,14 @@ resource "aws_imagebuilder_infrastructure_configuration" "infra_main" {
 ##############################
 
 resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
-  name = "${var.Tags.Project}${var.Tags.Stage}${var.Name}"
+  name = "${var.Name}"
   distribution {
     region = data.aws_region.current.name
     ami_distribution_configuration {
-      name        = "${var.Tags.Project}${var.Tags.Stage}${var.Name}{{ imagebuilder:buildDate }}"
-      ami_tags = merge(
-        {
-          Name = var.Name
-        },
-        var.Tags
-      )
+      name        = "${var.Name}{{ imagebuilder:buildDate }}"
+      ami_tags = merge(var.Tags, {
+        Name = var.Name
+      })
     }
   }
   tags = merge(var.Tags, {
@@ -235,7 +240,7 @@ resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
 ##############################
 
 resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
-  name = "${var.Tags.Project}${var.Tags.Stage}${var.Name}"
+  name = "${var.Name}"
   image_recipe_arn                    = aws_imagebuilder_image_recipe.recipe_main.arn
   infrastructure_configuration_arn    = aws_imagebuilder_infrastructure_configuration.infra_main.arn
   distribution_configuration_arn   = aws_imagebuilder_distribution_configuration.distribution_main.arn

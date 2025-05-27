@@ -5,7 +5,7 @@ data "aws_ami" "data_ami" {
   owners = ["self"]
   filter {
     name   = "name"
-    values = ["${var.Tags.Project}${var.Tags.Stage}${var.Name}*"]
+    values = ["${var.Name}*"]
   }
   filter {
     name   = "state"
@@ -13,4 +13,3 @@ data "aws_ami" "data_ami" {
   }
   depends_on = [null_resource.resource_main]
 }
-

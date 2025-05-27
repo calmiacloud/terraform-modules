@@ -27,7 +27,7 @@ resource "aws_iam_role" "role_ssm" {
 ##############################
 
 resource "aws_iam_instance_profile" "instanceprofile_ssm" {
-  name = "${var.Tags.Project}${var.Tags.Stage}${var.Name}"
+  name = "${var.Name}"
   role = aws_iam_role.role_ssm.name
 }
 
