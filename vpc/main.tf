@@ -7,12 +7,9 @@ resource "aws_vpc" "vpc" {
   enable_dns_support             = true
   enable_dns_hostnames           = var.Vpc.DnsSupport
   assign_generated_ipv6_cidr_block = var.Vpc.Ipv6Support
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 ##############################
@@ -71,35 +68,26 @@ resource "aws_subnet" "subnet_private" {
 resource "aws_internet_gateway" "ig_internet" {
   count  = length(var.Subnets.Public) > 0 ? 1 : 0
   vpc_id = aws_vpc.vpc.id
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 resource "aws_eip" "eip_ig_nat" {
   count  = length(var.Subnets.Nat) > 0 ? 1 : 0
   domain = "vpc"
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 resource "aws_nat_gateway" "ig_nat" {
   count         = length(var.Subnets.Nat) > 0 ? 1 : 0
   allocation_id = aws_eip.eip_ig_nat[0].id
   subnet_id     = aws_subnet.subnet_public[0].id
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 #################################
@@ -129,12 +117,9 @@ resource "aws_route_table" "rt_public" {
       network_interface_id      = route.value.Type == "NetworkInterface"      ? route.value.Target : null
     }
   }
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 resource "aws_route_table" "rt_nat" {
@@ -155,12 +140,9 @@ resource "aws_route_table" "rt_nat" {
       network_interface_id      = route.value.Type == "NetworkInterface"      ? route.value.Target : null
     }
   }
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 # 3) Privada
@@ -176,12 +158,9 @@ resource "aws_route_table" "rt_private" {
       network_interface_id      = route.value.Type == "NetworkInterface"      ? route.value.Target : null
     }
   }
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 #################################

@@ -11,12 +11,9 @@ resource "aws_s3_bucket" "bucket" {
       error_message = "main.yml not found in ${var.Source}"
     }
   }
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 resource "aws_s3_object" "objects" {
@@ -53,12 +50,9 @@ resource "aws_iam_policy" "policy_bucket" {
       }
     ]
   })
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 resource "aws_iam_role_policy" "policy_imagebuilder" {
@@ -108,12 +102,9 @@ resource "aws_iam_role" "role_ssm" {
     "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
     aws_iam_policy.policy_bucket.arn,
   ]
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 resource "aws_iam_instance_profile" "instanceprofile_main" {
@@ -130,12 +121,9 @@ resource "aws_imagebuilder_component" "component_basicpackages" {
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/basic_packages.yml")
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 resource "aws_imagebuilder_component" "component_installansible" {
@@ -143,12 +131,9 @@ resource "aws_imagebuilder_component" "component_installansible" {
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/install_ansible.yml")
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 resource "aws_imagebuilder_component" "component_downloadplaybook" {
@@ -156,12 +141,9 @@ resource "aws_imagebuilder_component" "component_downloadplaybook" {
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/download_playbook.yml")
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 resource "aws_imagebuilder_component" "component_runplaybookreboot" {
@@ -169,12 +151,9 @@ resource "aws_imagebuilder_component" "component_runplaybookreboot" {
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/run_playbook_reboot.yml")
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 ##############################
@@ -210,12 +189,9 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
       value = "/tmp/playbook/main.yml"
     }
   }
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 ##############################
@@ -249,12 +225,9 @@ resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
       )
     }
   }
-  tags = merge(
-    {
-      Name = var.Name
-    },
-    var.tags
-  )
+  tags = merge(var.Tags, {
+    Name = var.Name
+  })
 }
 
 ##############################

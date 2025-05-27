@@ -33,3 +33,10 @@ variable "Egress" {
   ]
 }
 
+variable "Tags" {
+  type = object({
+    Project = string
+    Repo    = string
+    Stage   = string
+  })
+}

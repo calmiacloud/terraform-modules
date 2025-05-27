@@ -76,3 +76,11 @@ variable "Subnets" {
     EOF
   }
 }
+
+variable "Tags" {
+  type = object({
+    Project = string
+    Repo    = string
+    Stage   = string
+  })
+}

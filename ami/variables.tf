@@ -20,3 +20,11 @@ variable "ExtraVars" {
   type    = any
   default = {}
 }
+
+variable "Tags" {
+  type = object({
+    Project = string
+    Repo    = string
+    Stage   = string
+  })
+}

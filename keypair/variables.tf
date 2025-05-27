@@ -5,3 +5,11 @@ variable "Name" {
 variable "PublicKeyB64" {
   type        = string
 }
+
+variable "Tags" {
+  type = object({
+    Project = string
+    Repo    = string
+    Stage   = string
+  })
+}
