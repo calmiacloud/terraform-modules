@@ -5,7 +5,7 @@ data "aws_ami" "data_ami" {
   owners = ["self"]
   filter {
     name   = "name"
-    values = ["${var.Product}${var.Stage}${var.Name}*"]
+    values = ["${var.Tags.Product}${var.Tags.Stage}${var.Name}*"]
   }
   filter {
     name   = "state"
