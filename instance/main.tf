@@ -14,12 +14,14 @@ resource "aws_iam_role" "role_ssm" {
       }
     ]
   })
-  managed_policy_arns = [
-    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  ]
   tags = merge(var.Tags, {
     Name = var.Name
   })
+}
+
+resource "aws_iam_role_policy_attachment" "role_ssm_policy_attachment" {
+  role       = aws_iam_role.role_ssm.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 ##############################
