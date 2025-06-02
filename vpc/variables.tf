@@ -10,51 +10,52 @@ variable "Vpc" {
   })
 }
 
+
 variable "Subnets" {
   type = object({
     Public = optional(
       list(object({
         Name             = string
-        Cidr             = list(string)
+        Cidr             = list(string)    # <-- antes era `string`
         AdditionalRoutes = optional(
           list(object({
             Cidr   = string
             Type   = string
             Target = string
-          })),
+          })), 
           []
         )
-      })),
+      })), 
       []
     )
     Nat = optional(
       list(object({
         Name             = string
-        Cidr             = list(string)
+        Cidr             = list(string)    # <-- aquí también
         AdditionalRoutes = optional(
           list(object({
             Cidr   = string
             Type   = string
             Target = string
-          })),
+          })), 
           []
         )
-      })),
+      })), 
       []
     )
     Private = optional(
       list(object({
         Name             = string
-        Cidr             = list(string)
+        Cidr             = list(string)    # <-- y aquí
         AdditionalRoutes = optional(
           list(object({
             Cidr   = string
             Type   = string
             Target = string
-          })),
+          })), 
           []
         )
-      })),
+      })), 
       []
     )
   })
