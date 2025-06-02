@@ -180,7 +180,7 @@ resource "aws_route_table_association" "nat" {
 }
 
 resource "aws_route_table_association" "private" {
-  count          = length(aws_subnet.subnet_private)
-  subnet_id      = aws_subnet.subnet_private[values(aws_subnet.subnet_private)[count.index].id]
+  for_each       = aws_subnet.subnet_private
+  subnet_id      = each.value.id
   route_table_id = aws_route_table.rt_private[0].id
 }
