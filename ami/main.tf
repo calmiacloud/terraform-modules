@@ -116,7 +116,7 @@ resource "aws_iam_role" "role_ssm" {
 }
 
 resource "aws_iam_instance_profile" "instanceprofile_main" {
-  name = "InstanceprofileAmi${var.Name}"
+  name = "InstanceprofileSsm${var.Name}"
   role = aws_iam_role.role_ssm.name
 }
 
