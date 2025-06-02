@@ -18,27 +18,43 @@ resource "aws_vpc" "vpc" {
 
 # Public
 resource "aws_subnet" "subnet_public" {
-  for_each               = { for idx, s in var.Subnets.Public : idx => s }
-  vpc_id                  = aws_vpc.vpc.id
-  cidr_block              = each.value.Cidr
-  availability_zone       = element(data.aws_availability_zones.available.names, each.key)
-  map_public_ip_on_launch = true
-  ipv6_cidr_block         = var.Vpc.Ipv6Support ? cidrsubnet(aws_vpc.vpc.ipv6_cidr_block, 8, each.key) : null
+  for_each = {
+    for s in var.Subnets.Public :
+    for idx, cidr in s.Cidr :
+    "${s.Name}-${idx}" => {
+      name     = s.Name
+      cidr     = cidr
+      az_index = idx
+    }
+  }
+  vpc_id                         = aws_vpc.vpc.id
+  cidr_block                     = each.value.cidr
+  availability_zone              = element(data.aws_availability_zones.available.names, each.value.az_index)
+  map_public_ip_on_launch        = true
+  ipv6_cidr_block                = var.Vpc.Ipv6Support ? cidrsubnet(aws_vpc.vpc.ipv6_cidr_block, 8, each.value.az_index) : null
   assign_ipv6_address_on_creation = var.Vpc.Ipv6Support ? true : null
   tags = merge(
-    { Name = "Public${each.value.Name}" },
+    { Name = "Public${each.value.name}Az${each.value.az_index}" },
     var.Tags
   )
 }
 
 resource "aws_subnet" "subnet_nat" {
-  for_each               = { for idx, s in var.Subnets.Nat : idx => s }
+  for_each = {
+    for s in var.Subnets.Nat :
+    for idx, cidr in s.Cidr :
+    "${s.Name}-${idx}" => {
+      name     = s.Name
+      cidr     = cidr
+      az_index = idx
+    }
+  }
   vpc_id                  = aws_vpc.vpc.id
-  cidr_block              = each.value.Cidr
-  availability_zone       = element(data.aws_availability_zones.available.names, each.key)
+  cidr_block              = each.value.cidr
+  availability_zone       = element(data.aws_availability_zones.available.names, each.value.az_index)
   map_public_ip_on_launch = false
   tags = merge(
-    { Name = "Nat${each.value.Name}" },
+    { Name = "Nat${each.value.name}Az${each.value.az_index}" },
     var.Tags
   )
 }
@@ -46,12 +62,20 @@ resource "aws_subnet" "subnet_nat" {
 
 # Private
 resource "aws_subnet" "subnet_private" {
-  for_each         = { for idx, s in var.Subnets.Private : idx => s }
+  for_each = {
+    for s in var.Subnets.Private :
+    for idx, cidr in s.Cidr :
+    "${s.Name}-${idx}" => {
+      name     = s.Name
+      cidr     = cidr
+      az_index = idx
+    }
+  }
   vpc_id            = aws_vpc.vpc.id
-  cidr_block        = each.value.Cidr
-  availability_zone = element(data.aws_availability_zones.available.names, each.key)
+  cidr_block        = each.value.cidr
+  availability_zone = element(data.aws_availability_zones.available.names, each.value.az_index)
   tags = merge(
-    { Name = "Private${each.value.Name}" },
+    { Name = "Private${each.value.name}Az${each.value.az_index}" },
     var.Tags
   )
 }
