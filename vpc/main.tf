@@ -26,7 +26,7 @@ resource "aws_subnet" "subnet_public" {
   ipv6_cidr_block         = var.Vpc.Ipv6Support ? cidrsubnet(aws_vpc.vpc.ipv6_cidr_block, 8, each.key) : null
   assign_ipv6_address_on_creation = var.Vpc.Ipv6Support ? true : null
   tags = merge(
-    { Name = "Public-${each.value.Name}" },
+    { Name = "Public${each.value.Name}" },
     var.Tags
   )
 }
@@ -38,7 +38,7 @@ resource "aws_subnet" "subnet_nat" {
   availability_zone       = element(data.aws_availability_zones.available.names, each.key)
   map_public_ip_on_launch = false
   tags = merge(
-    { Name = "Nat-${each.value.Name}" },
+    { Name = "Nat${each.value.Name}" },
     var.Tags
   )
 }
@@ -51,7 +51,7 @@ resource "aws_subnet" "subnet_private" {
   cidr_block        = each.value.Cidr
   availability_zone = element(data.aws_availability_zones.available.names, each.key)
   tags = merge(
-    { Name = "Private-${each.value.Name}" },
+    { Name = "Private${each.value.Name}" },
     var.Tags
   )
 }
