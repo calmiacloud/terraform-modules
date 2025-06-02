@@ -28,6 +28,9 @@ resource "aws_subnet" "subnet_public" {
     { Name = "Public${var.Subnets.Public[0].Name}Az${count.index}" },
     var.Tags
   )
+  lifecycle {
+    create_before_destroy = false
+  }
 }
 
 resource "aws_subnet" "subnet_nat" {
@@ -40,6 +43,9 @@ resource "aws_subnet" "subnet_nat" {
     { Name = "Nat${var.Subnets.Nat[0].Name}Az${count.index}" },
     var.Tags
   )
+  lifecycle {
+    create_before_destroy = false
+  }
 }
 
 resource "aws_subnet" "subnet_private" {
@@ -51,6 +57,9 @@ resource "aws_subnet" "subnet_private" {
     { Name = "Private${var.Subnets.Private[0].Name}Az${count.index}" },
     var.Tags
   )
+  lifecycle {
+    create_before_destroy = false
+  }
 }
 
 ##############################
