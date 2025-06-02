@@ -119,7 +119,7 @@ resource "aws_route_table" "rt_public" {
     }
   }
   tags = merge(var.Tags, {
-    Name = var.Name
+    Name = "Public${var.Name}"
   })
 }
 
@@ -142,7 +142,7 @@ resource "aws_route_table" "rt_nat" {
     }
   }
   tags = merge(var.Tags, {
-    Name = var.Name
+    Name = "Nat${var.Name}"
   })
 }
 
@@ -159,7 +159,7 @@ resource "aws_route_table" "rt_private" {
     }
   }
   tags = merge(var.Tags, {
-    Name = var.Name
+    Name = "Private${var.Name}"
   })
 }
 
