@@ -16,48 +16,42 @@ resource "aws_vpc" "vpc" {
 # Subnets
 ##############################
 
+# Public
 resource "aws_subnet" "subnet_public" {
-  count                   = length(var.Subnets.Public)
+  for_each               = { for idx, s in var.Subnets.Public : idx => s }
   vpc_id                  = aws_vpc.vpc.id
-  cidr_block              = var.Subnets.Public[count.index].Cidr
-  availability_zone       = element(data.aws_availability_zones.available.names, count.index)
+  cidr_block              = each.value.Cidr
+  availability_zone       = element(data.aws_availability_zones.available.names, each.key)
   map_public_ip_on_launch = true
-  ipv6_cidr_block = var.Vpc.Ipv6Support ? cidrsubnet(aws_vpc.vpc.ipv6_cidr_block, 8, count.index) : null
+  ipv6_cidr_block         = var.Vpc.Ipv6Support ? cidrsubnet(aws_vpc.vpc.ipv6_cidr_block, 8, each.key) : null
   assign_ipv6_address_on_creation = var.Vpc.Ipv6Support ? true : null
   tags = merge(
-    {
-      Name = "Public${var.Subnets.Public[count.index].Name}"
-    },
+    { Name = "Public-${each.value.Name}" },
     var.Tags
   )
 }
 
 resource "aws_subnet" "subnet_nat" {
-  count                   = length(var.Subnets.Nat)
+  for_each               = { for idx, s in var.Subnets.Nat : idx => s }
   vpc_id                  = aws_vpc.vpc.id
-  cidr_block              = var.Subnets.Nat[count.index].Cidr
-  availability_zone       = element(data.aws_availability_zones.available.names, count.index)
+  cidr_block              = each.value.Cidr
+  availability_zone       = element(data.aws_availability_zones.available.names, each.key)
   map_public_ip_on_launch = false
   tags = merge(
-    {
-      Name = "Nat${var.Subnets.Nat[count.index].Name}"
-    },
+    { Name = "Nat-${each.value.Name}" },
     var.Tags
   )
 }
 
 
+# Private
 resource "aws_subnet" "subnet_private" {
-  for_each = {
-    for s in var.Subnets.Private : s.Name => s
-  }
+  for_each         = { for idx, s in var.Subnets.Private : idx => s }
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = each.value.Cidr
-  availability_zone = element(data.aws_availability_zones.available.names, 0) # ajusta si tienes varias AZs
+  availability_zone = element(data.aws_availability_zones.available.names, each.key)
   tags = merge(
-    {
-      Name = "Private${each.value.Name}"
-    },
+    { Name = "Private-${each.value.Name}" },
     var.Tags
   )
 }
