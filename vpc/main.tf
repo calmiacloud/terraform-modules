@@ -8,7 +8,7 @@ resource "aws_vpc" "vpc" {
   enable_dns_hostnames           = var.Vpc.DnsSupport
   assign_generated_ipv6_cidr_block = var.Vpc.Ipv6Support
   tags = merge(var.Tags, {
-    Name = var.Name
+    Name = "Vpc${var.Name}" },
   })
 }
 
@@ -25,7 +25,7 @@ resource "aws_subnet" "subnet_public" {
   ipv6_cidr_block           = var.Vpc.Ipv6Support ? cidrsubnet(aws_vpc.vpc.ipv6_cidr_block, 8, count.index) : null
   assign_ipv6_address_on_creation = var.Vpc.Ipv6Support ? true : null
   tags = merge(
-    { Name = "Public${var.Subnets.Public[0].Name}Az${count.index}" },
+    { Name = "SubnetPublic${var.Subnets.Public[0].Name}Az${count.index}" },
     var.Tags
   )
   lifecycle {
@@ -40,7 +40,7 @@ resource "aws_subnet" "subnet_nat" {
   availability_zone = element(data.aws_availability_zones.available.names, count.index)
   map_public_ip_on_launch = false
   tags = merge(
-    { Name = "Nat${var.Subnets.Nat[0].Name}Az${count.index}" },
+    { Name = "SubnetNat${var.Subnets.Nat[0].Name}Az${count.index}" },
     var.Tags
   )
   lifecycle {
@@ -54,7 +54,7 @@ resource "aws_subnet" "subnet_private" {
   cidr_block        = var.Subnets.Private[0].Cidr[count.index]
   availability_zone = element(data.aws_availability_zones.available.names, count.index)
   tags = merge(
-    { Name = "Private${var.Subnets.Private[0].Name}Az${count.index}" },
+    { Name = "SubnetPrivate${var.Subnets.Private[0].Name}Az${count.index}" },
     var.Tags
   )
   lifecycle {
@@ -119,7 +119,7 @@ resource "aws_route_table" "rt_public" {
     }
   }
   tags = merge(var.Tags, {
-    Name = "Public${var.Name}"
+    Name = "RtPublic${var.Name}"
   })
 }
 
@@ -142,7 +142,7 @@ resource "aws_route_table" "rt_nat" {
     }
   }
   tags = merge(var.Tags, {
-    Name = "Nat${var.Name}"
+    Name = "RtNat${var.Name}"
   })
 }
 
@@ -159,7 +159,7 @@ resource "aws_route_table" "rt_private" {
     }
   }
   tags = merge(var.Tags, {
-    Name = "Private${var.Name}"
+    Name = "RtPrivate${var.Name}"
   })
 }
 
