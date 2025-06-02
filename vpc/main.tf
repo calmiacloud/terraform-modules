@@ -26,7 +26,7 @@ resource "aws_subnet" "subnet_public" {
   assign_ipv6_address_on_creation = var.Vpc.Ipv6Support ? true : null
   tags = merge(
     {
-      Name = var.Subnets.Public[count.index].Name
+      Name = "Public${var.Subnets.Public[count.index].Name}"
     },
     var.Tags
   )
@@ -40,11 +40,12 @@ resource "aws_subnet" "subnet_nat" {
   map_public_ip_on_launch = false
   tags = merge(
     {
-      Name =var.Subnets.Nat[count.index].Name
+      Name = "Nat${var.Subnets.Nat[count.index].Name}"
     },
     var.Tags
   )
 }
+
 
 resource "aws_subnet" "subnet_private" {
   for_each = {
@@ -55,7 +56,7 @@ resource "aws_subnet" "subnet_private" {
   availability_zone = element(data.aws_availability_zones.available.names, 0) # ajusta si tienes varias AZs
   tags = merge(
     {
-      Name = each.value.Name
+      Name = "Private${each.value.Name}"
     },
     var.Tags
   )
