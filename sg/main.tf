@@ -3,7 +3,7 @@
 ##############################
 
 resource "aws_security_group" "sg" {
-  name = "${var.Name}"
+  name = "Sg${var.Name}"
   vpc_id      = var.VpcId
   tags = merge(var.Tags, {
     Name = var.Name
