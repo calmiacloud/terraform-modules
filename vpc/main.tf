@@ -70,7 +70,7 @@ resource "aws_internet_gateway" "ig_internet" {
   count  = length(var.Subnets.Public) > 0 ? 1 : 0
   vpc_id = aws_vpc.vpc.id
   tags = merge(var.Tags, {
-    Name = var.Name
+    Name = "Ig${var.Name}"
   })
 }
 
@@ -78,7 +78,7 @@ resource "aws_eip" "eip_ig_nat" {
   count  = length(var.Subnets.Nat) > 0 ? 1 : 0
   domain = "vpc"
   tags = merge(var.Tags, {
-    Name = var.Name
+    Name = "EipIgn${var.Name}"
   })
 }
 
@@ -87,7 +87,7 @@ resource "aws_nat_gateway" "ig_nat" {
   allocation_id = aws_eip.eip_ig_nat[0].id
   subnet_id     = aws_subnet.subnet_public[0].id
   tags = merge(var.Tags, {
-    Name = var.Name
+    Name = "Ign${var.Name}"
   })
 }
 
