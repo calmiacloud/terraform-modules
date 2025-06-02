@@ -8,7 +8,7 @@ resource "aws_vpc" "vpc" {
   enable_dns_hostnames           = var.Vpc.DnsSupport
   assign_generated_ipv6_cidr_block = var.Vpc.Ipv6Support
   tags = merge(var.Tags, {
-    Name = "Vpc${var.Name}" },
+    Name = "Vpc${var.Name}"
   })
 }
 
