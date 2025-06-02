@@ -15,7 +15,7 @@ variable "Subnets" {
     Public = optional(
       list(object({
         Name             = string
-        Cidr             = string
+        Cidr             = list(string)
         AdditionalRoutes = optional(
           list(object({
             Cidr   = string
@@ -30,7 +30,7 @@ variable "Subnets" {
     Nat = optional(
       list(object({
         Name             = string
-        Cidr             = string
+        Cidr             = list(string)
         AdditionalRoutes = optional(
           list(object({
             Cidr   = string
@@ -45,7 +45,7 @@ variable "Subnets" {
     Private = optional(
       list(object({
         Name             = string
-        Cidr             = string
+        Cidr             = list(string)
         AdditionalRoutes = optional(
           list(object({
             Cidr   = string
