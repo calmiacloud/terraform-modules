@@ -3,7 +3,7 @@
 ##############################
 
 resource "aws_iam_role" "role_ssm" {
-  name = "RoleSsm${var.Name}"
+  name = "RoleSsmInstance${var.Name}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -29,7 +29,7 @@ resource "aws_iam_role_policy_attachment" "role_ssm_policy_attachment" {
 ##############################
 
 resource "aws_iam_instance_profile" "instanceprofile_ssm" {
-  name = "InstanceprofileSsm${var.Name}"
+  name = "InstanceprofileSsmInstance${var.Name}"
   role = aws_iam_role.role_ssm.name
 }
 
