@@ -28,7 +28,6 @@ phases:
                 -i localhost, \
                 -c local \
                 -e 'ansible_python_interpreter=/usr/bin/python3' \
-                -vvv \
                 -e @/tmp/extravars.json \
                 {{ PlaybookPath }}
 
