@@ -3,6 +3,5 @@ output "Id" {
 }
 
 output "Nameservers" {
-  value       = aws_route53_zone.zone.name_servers
-  condition   = var.Type == "Public"
+  value       = var.Type == "Public" ? aws_route53_zone.zone.name_servers : []
 }

@@ -16,10 +16,6 @@ variable "Type" {
 
 variable "Vpc" {
   type        = string
-  validation {
-    condition = var.Type == "Public" || (var.Type == "Private" && length(var.vpc_ids) > 0)
-    error_message = "Debe especificarse al menos una VPC si el tipo de zona es 'Private'."
-  }
 }
 
 variable "Tags" {
