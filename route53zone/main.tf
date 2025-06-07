@@ -10,7 +10,6 @@ resource "aws_route53_zone" "zone" {
       vpc_id = vpc.value
     }
   }
-  private_zone = var.Type == "Private"
   tags = merge(var.Tags, {
     Name = "Route53Zone${var.Name}"
   })
