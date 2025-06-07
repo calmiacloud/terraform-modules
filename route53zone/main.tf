@@ -1,5 +1,5 @@
 ##############################
-# VPC Block
+# Route53 Block
 ##############################
 
 resource "aws_route53_zone" "zone" {
