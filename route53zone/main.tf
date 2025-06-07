@@ -3,7 +3,7 @@
 ##############################
 
 resource "aws_route53_zone" "zone" {
-  name = var.domain
+  name = var.Domain
   dynamic "vpc" {
     for_each = var.Type == "Private" ? [var.Vpc] : []
     content {
