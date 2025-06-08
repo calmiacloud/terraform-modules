@@ -4,20 +4,11 @@
 
 resource "aws_route53_record" "record" {
   for_each = {
-    for Record in var.Records : "${Record.Name}-${Record.Type}" => record
+    for record in var.Records : "${record.Name}-${record.Type}" => record
   }
-  zone_id = var.Zone
   name    = each.value.Name
   type    = each.value.Type
   ttl     = each.value.Ttl
-  records = each.value.Type == "MX" ? null : each.value.Records
-
-  # MX records usan una estructura especial
-  dynamic "mx" {
-    for_each = each.value.Type == "MX" ? each.value.Records : []
-    content {
-      preference = mx.value.preference
-      exchange   = mx.value.exchange
-    }
-  }
+  records = each.value.Records
+  zone_id = var.Zone
 }
