@@ -10,7 +10,7 @@ fi
 
 # Check if zone exists — if not, assume we're in destroy
 if ! aws route53 get-hosted-zone --id "$ZONE_ID" > /dev/null 2>&1; then
-  echo -e "\e[33m[SKIP] Zone $ZONE_ID not found. Skipping check (likely destroy).\e[0m"
+  echo -e "\e[33m[SKIP] Zone $ZONE_ID not found. Skipping check (likely terraform destroy).\e[0m"
   exit 0
 fi
 
@@ -23,7 +23,7 @@ if [[ "$IS_PRIVATE" == "true" ]]; then
 fi
 
 DOMAIN=$(echo "$ZONE_INFO" | jq -r '.HostedZone.Name' | sed 's/\.$//')
-NS_ROUTE53=($(echo "$ZONE_INFO" | jq -r '.DelegationSet.NameServers[]' | sort))
+NS_ROUTE53=($(echo "$ZONE_INFO" | jq -r '.DelegationSet.NameServers[]' | tr 'A-Z' 'a-z' | sort))
 
 echo -e "\e[34m==> Domain: $DOMAIN\e[0m"
 echo -e "\e[34m==> Expected NS (from Route 53):\e[0m"
@@ -35,7 +35,7 @@ START_TIME=$(date +%s)
 
 while :; do
   NS_GOOGLE_RAW=$(dig +short @8.8.8.8 NS "$DOMAIN")
-  NS_GOOGLE=($(echo "$NS_GOOGLE_RAW" | sort))
+  NS_GOOGLE=($(echo "$NS_GOOGLE_RAW" | sed 's/\.$//' | tr 'A-Z' 'a-z' | sort))
 
   echo -e "\e[36m--> NS currently returned by Google (8.8.8.8):\e[0m"
   if [[ ${#NS_GOOGLE[@]} -eq 0 ]]; then
