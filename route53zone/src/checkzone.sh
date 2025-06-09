@@ -1,30 +1,61 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
 
-# Comprueba que se proporciona exactamente un argumento (ARN del pipeline)
-if [ $# -ne 1 ]; then
-  echo -e "\e[31m ==> ❌ Halted Script: Pipeline ARN not provided.\e[0m"
+ZONE_ID=$1
+
+if [[ -z "$ZONE_ID" ]]; then
+  echo -e "\e[31mERROR: Route 53 Zone ID was not provided.\e[0m"
+  echo "Usage: ./wait_ns_google.sh <zone_id>"
   exit 1
 fi
 
-PIPELINE_ARN="$1"
-
-#!/bin/bash
-
-DOMAIN=$1
-
-echo "Zona creada: ${DOMAIN}"
-echo "Servidores DNS asignados por Route53:"
-dig +short NS "${DOMAIN}" || {
-  echo "No se pudieron obtener los NS todavía."
+# Fetch zone and expected NS records from AWS
+ZONE_INFO=$(aws route53 get-hosted-zone --id "$ZONE_ID") || {
+  echo -e "\e[31mERROR: Failed to get hosted zone with ID $ZONE_ID\e[0m"
+  exit 1
 }
 
-echo "Esperando a que los servidores NS estén disponibles públicamente..."
+DOMAIN=$(echo "$ZONE_INFO" | jq -r '.HostedZone.Name' | sed 's/\.$//')
+NS_ROUTE53=($(echo "$ZONE_INFO" | jq -r '.DelegationSet.NameServers[]' | sort))
 
-for i in {1..30}; do
-  dig +short NS "${DOMAIN}" | grep amazonaws.com && exit 0
-  sleep 10
+echo -e "\e[34m==> Domain: $DOMAIN\e[0m"
+echo -e "\e[34m==> Expected NS (from Route 53):\e[0m"
+for ns in "${NS_ROUTE53[@]}"; do echo " - $ns"; done
+echo ""
+
+echo -e "\e[34m==> Checking propagation in Google DNS (8.8.8.8)...\e[0m"
+START_TIME=$(date +%s)
+
+while :; do
+  NS_GOOGLE=($(dig +short @8.8.8.8 NS "$DOMAIN" | sort))
+
+  if [[ ${#NS_GOOGLE[@]} -eq 0 ]]; then
+    STATUS="NO_RESPONSE"
+  elif diff <(printf "%s\n" "${NS_ROUTE53[@]}") <(printf "%s\n" "${NS_GOOGLE[@]}") > /dev/null; then
+    STATUS="PROPAGATED"
+  else
+    STATUS="MISMATCH"
+  fi
+
+  echo -e "\e[33m ==> Status: $STATUS\e[0m"
+
+  case "$STATUS" in
+    PROPAGATED)
+      echo -e "\e[32m ==> ✅ NS propagated successfully on Google DNS.\e[0m"
+      break
+      ;;
+    MISMATCH | NO_RESPONSE)
+      NOW=$(date +%s)
+      ELAPSED=$((NOW - START_TIME))
+      printf -v ET "%02d:%02d:%02d" $((ELAPSED/3600)) $(((ELAPSED%3600)/60)) $((ELAPSED%60))
+      echo -e "\e[33m ==> Waiting 30s... (elapsed: $ET)\e[0m"
+      sleep 30
+      ;;
+  esac
+
+  if (( ELAPSED > 900 )); then
+    echo -e "\e[31m ❌ Timeout: NS records did not propagate after 15 minutes.\e[0m"
+    exit 1
+  fi
 done
 
-echo "Tiempo de espera agotado para la propagación de NS"
-exit 1
+echo -e "\e[32m ==> All done!\e[0m"
