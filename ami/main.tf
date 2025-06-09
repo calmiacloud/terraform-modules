@@ -270,6 +270,6 @@ resource "null_resource" "resource_main" {
     aws_imagebuilder_image_pipeline.pipeline_main
   ]
   provisioner "local-exec" {
-    command = "./src/runpipeline.sh ${aws_imagebuilder_image_pipeline.pipeline_main.arn}"
+    command = "${path.module}/src/runpipeline.sh ${aws_imagebuilder_image_pipeline.pipeline_main.arn}"
   }
 }
