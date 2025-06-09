@@ -100,7 +100,7 @@ resource "aws_route_table" "rt_public" {
     gateway_id = aws_internet_gateway.ig_internet[0].id
   }
   dynamic "route" {
-    for_each = var.Vpc.Ipv6Support ? [1] : []
+    for_each = var.Ipv6Support ? [1] : []
     content {
       ipv6_cidr_block = "::/0"
       gateway_id      = aws_internet_gateway.ig_internet[0].id
