@@ -8,17 +8,19 @@ if [[ -z "$ZONE_ID" ]]; then
   exit 1
 fi
 
-# Check if zone exists — if not, assume we're in `terraform destroy` and exit cleanly
+# Check if zone exists — if not, assume we're in destroy
 if ! aws route53 get-hosted-zone --id "$ZONE_ID" > /dev/null 2>&1; then
-  echo -e "\e[33m[SKIP] Route53 zone $ZONE_ID not found. Skipping NS check (likely running during terraform destroy).\e[0m"
+  echo -e "\e[33m[SKIP] Zone $ZONE_ID not found. Skipping check (likely destroy).\e[0m"
   exit 0
 fi
 
-# Fetch zone and expected NS records from AWS
-ZONE_INFO=$(aws route53 get-hosted-zone --id "$ZONE_ID") || {
-  echo -e "\e[31mERROR: Failed to get hosted zone with ID $ZONE_ID\e[0m"
-  exit 1
-}
+ZONE_INFO=$(aws route53 get-hosted-zone --id "$ZONE_ID")
+IS_PRIVATE=$(echo "$ZONE_INFO" | jq -r '.HostedZone.Config.PrivateZone')
+
+if [[ "$IS_PRIVATE" == "true" ]]; then
+  echo -e "\e[34m==> Zone is private. NS propagation check is not applicable.\e[0m"
+  exit 0
+fi
 
 DOMAIN=$(echo "$ZONE_INFO" | jq -r '.HostedZone.Name' | sed 's/\.$//')
 NS_ROUTE53=($(echo "$ZONE_INFO" | jq -r '.DelegationSet.NameServers[]' | sort))
