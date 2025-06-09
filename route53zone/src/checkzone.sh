@@ -8,6 +8,12 @@ if [[ -z "$ZONE_ID" ]]; then
   exit 1
 fi
 
+# Check if zone exists — if not, assume we're in `terraform destroy` and exit cleanly
+if ! aws route53 get-hosted-zone --id "$ZONE_ID" > /dev/null 2>&1; then
+  echo -e "\e[33m[SKIP] Route53 zone $ZONE_ID not found. Skipping NS check (likely running during terraform destroy).\e[0m"
+  exit 0
+fi
+
 # Fetch zone and expected NS records from AWS
 ZONE_INFO=$(aws route53 get-hosted-zone --id "$ZONE_ID") || {
   echo -e "\e[31mERROR: Failed to get hosted zone with ID $ZONE_ID\e[0m"
