@@ -15,3 +15,13 @@ resource "aws_route53_zone" "zone" {
   })
 }
 
+##############################
+# Waiter Block
+##############################
+
+resource "null_resource" "resource_main" {
+  depends_on = [aws_route53_zone.zone]
+  provisioner "local-exec" {
+    command = "./src/checkzone.sh ${aws_route53_zone.zone.name}"
+  }
+}
