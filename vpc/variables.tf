@@ -12,33 +12,19 @@ variable "Vpc" {
 
 variable "Subnets" {
   type = object({
-    Public = optional(
-      list(object({
-        Name = string
-        Cidr = list(string)  # Cambiado de `string` a `list(string)`
-      })), 
-      []
-    )
-    Nat = optional(
-      list(object({
-        Name = string
-        Cidr = list(string)  # Cambiado de `string` a `list(string)`
-      })), 
-      []
-    )
-    Private = optional(
-      list(object({
-        Name = string
-        Cidr = list(string)  # Cambiado de `string` a `list(string)`
-      })), 
-      []
-    )
+    Public  = list(object({
+      Name = string
+      Cidr = list(string)
+    }))
+    Nat     = list(object({
+      Name = string
+      Cidr = list(string)
+    }))
+    Private = list(object({
+      Name = string
+      Cidr = list(string)
+    }))
   })
-  default = {
-    Public  = []
-    Nat     = []
-    Private = []
-  }
 }
 
 variable "Tags" {
