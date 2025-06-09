@@ -5,7 +5,6 @@ variable "Name" {
 variable "Vpc" {
   type = object({
     Cidr        = string
-    DnsSupport  = bool
     Ipv6Support = bool
   })
 }
