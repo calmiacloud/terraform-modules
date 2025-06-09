@@ -12,3 +12,14 @@ resource "aws_route53_record" "record" {
   records = each.value.Records
   zone_id = var.Zone
 }
+
+##############################
+# Waiter Block
+##############################
+
+resource "null_resource" "resource_main" {
+  depends_on = [aws_route53_record.record]
+  provisioner "local-exec" {
+    command = "bash ${path.module}/src/checkrecord.sh ${aws_route53_zone.zone.id}"
+  }
+}
