@@ -22,8 +22,8 @@ resource "aws_subnet" "subnet_public" {
   cidr_block = flatten([for _, cidrs in var.Subnets.Public : cidrs])[count.index]
   availability_zone = element(data.aws_availability_zones.available.names, count.index)
   map_public_ip_on_launch = true
-  ipv6_cidr_block = var.Vpc.Ipv6Support ? cidrsubnet(aws_vpc.vpc.ipv6_cidr_block, 8, count.index) : null
-  assign_ipv6_address_on_creation = var.Vpc.Ipv6Support ? true : null
+  ipv6_cidr_block = var.Ipv6Support ? cidrsubnet(aws_vpc.vpc.ipv6_cidr_block, 8, count.index) : null
+  assign_ipv6_address_on_creation = var.Ipv6Support ? true : null
   tags = merge(
     {
       Name = "SubnetPublic${flatten([for _, cidrs in var.Subnets.Public : cidrs])[count.index]}Az${count.index}"
