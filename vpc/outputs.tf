@@ -4,21 +4,27 @@ output "Id" {
 
 output "SubnetPublic" {
   value = {
-    for idx in range(length(var.Subnets.Public)) :
-    var.Subnets.Public[idx].Name => aws_subnet.subnet_public[idx].id
+    for idx, cidr in flatten([for name, cidrs in var.Subnets.Public : [
+      for i, c in cidrs : "${name}-${i}"
+    ]]) :
+    cidr => aws_subnet.subnet_public[idx].id
   }
 }
 
 output "SubnetNat" {
   value = {
-    for idx in range(length(var.Subnets.Nat)) :
-    var.Subnets.Nat[idx].Name => aws_subnet.subnet_nat[idx].id
+    for idx, cidr in flatten([for name, cidrs in lookup(var.Subnets, "Nat", {}) : [
+      for i, c in cidrs : "${name}-${i}"
+    ]]) :
+    cidr => aws_subnet.subnet_nat[idx].id
   }
 }
 
 output "SubnetPrivate" {
   value = {
-    for name, subnet in aws_subnet.subnet_private :
-    name => subnet.id
+    for idx, cidr in flatten([for name, cidrs in lookup(var.Subnets, "Private", {}) : [
+      for i, c in cidrs : "${name}-${i}"
+    ]]) :
+    cidr => aws_subnet.subnet_private[idx].id
   }
 }
