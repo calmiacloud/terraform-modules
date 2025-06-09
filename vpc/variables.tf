@@ -2,11 +2,12 @@ variable "Name" {
   type        = string
 }
 
-variable "Vpc" {
-  type = object({
-    Cidr        = string
-    Ipv6Support = bool
-  })
+variable "Cidr" {
+  type        = string
+}
+
+variable "Ipv6Support" {
+  type      = bool
 }
 
 variable "Subnets" {
