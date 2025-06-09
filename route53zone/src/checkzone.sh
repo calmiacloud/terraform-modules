@@ -34,7 +34,15 @@ echo -e "\e[34m==> Checking propagation in Google DNS (8.8.8.8)...\e[0m"
 START_TIME=$(date +%s)
 
 while :; do
-  NS_GOOGLE=($(dig +short @8.8.8.8 NS "$DOMAIN" | sort))
+  NS_GOOGLE_RAW=$(dig +short @8.8.8.8 NS "$DOMAIN")
+  NS_GOOGLE=($(echo "$NS_GOOGLE_RAW" | sort))
+
+  echo -e "\e[36m--> NS currently returned by Google (8.8.8.8):\e[0m"
+  if [[ ${#NS_GOOGLE[@]} -eq 0 ]]; then
+    echo " (none)"
+  else
+    for ns in "${NS_GOOGLE[@]}"; do echo " - $ns"; done
+  fi
 
   if [[ ${#NS_GOOGLE[@]} -eq 0 ]]; then
     STATUS="NO_RESPONSE"
