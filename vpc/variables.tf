@@ -11,18 +11,9 @@ variable "Vpc" {
 
 variable "Subnets" {
   type = object({
-    Public  = list(object({
-      Name = string
-      Cidr = list(string)
-    }))
-    Nat     = list(object({
-      Name = string
-      Cidr = list(string)
-    }))
-    Private = list(object({
-      Name = string
-      Cidr = list(string)
-    }))
+    Public  = map(list(string))
+    Nat     = optional(map(list(string)))
+    Private = optional(map(list(string)))
   })
 }
 
