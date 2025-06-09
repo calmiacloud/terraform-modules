@@ -10,51 +10,26 @@ variable "Vpc" {
   })
 }
 
-
 variable "Subnets" {
   type = object({
     Public = optional(
       list(object({
-        Name             = string
-        Cidr             = list(string)    # <-- antes era `string`
-        AdditionalRoutes = optional(
-          list(object({
-            Cidr   = string
-            Type   = string
-            Target = string
-          })), 
-          []
-        )
+        Name = string
+        Cidr = list(string)  # Cambiado de `string` a `list(string)`
       })), 
       []
     )
     Nat = optional(
       list(object({
-        Name             = string
-        Cidr             = list(string)    # <-- aquí también
-        AdditionalRoutes = optional(
-          list(object({
-            Cidr   = string
-            Type   = string
-            Target = string
-          })), 
-          []
-        )
+        Name = string
+        Cidr = list(string)  # Cambiado de `string` a `list(string)`
       })), 
       []
     )
     Private = optional(
       list(object({
-        Name             = string
-        Cidr             = list(string)    # <-- y aquí
-        AdditionalRoutes = optional(
-          list(object({
-            Cidr   = string
-            Type   = string
-            Target = string
-          })), 
-          []
-        )
+        Name = string
+        Cidr = list(string)  # Cambiado de `string` a `list(string)`
       })), 
       []
     )
@@ -63,18 +38,6 @@ variable "Subnets" {
     Public  = []
     Nat     = []
     Private = []
-  }
-  validation {
-    condition = alltrue([
-      for s in concat(var.Subnets.Public, var.Subnets.Nat, var.Subnets.Private) :
-      alltrue([
-        for r in lookup(s, "AdditionalRoutes", []) :
-        contains(["NetworkInterface", "Otro"], r.Type)
-      ])
-    ])
-    error_message = <<-EOF
-      'AdditionalRoute.Type' tiene ID invalido
-    EOF
   }
 }
 
