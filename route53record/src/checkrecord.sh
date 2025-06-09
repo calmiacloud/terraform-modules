@@ -4,6 +4,12 @@ RECORD_NAME=$1
 RECORD_TYPE=$2
 EXPECTED_CSV=$3
 
+# 🚫 Omitir si estamos en terraform destroy
+if [[ "$TF_ACTION" == "destroy" ]]; then
+  echo -e "\e[33m[SKIP] Terraform destroy detected. Skipping DNS check.\e[0m"
+  exit 0
+fi
+
 if [[ -z "$RECORD_NAME" || -z "$RECORD_TYPE" || -z "$EXPECTED_CSV" ]]; then
   echo -e "\e[31mERROR: Missing arguments.\e[0m"
   echo "Usage: ./wait_dns_record_google.sh <record_name> <record_type> <expected_value_1[,expected_value_2,...]>"
