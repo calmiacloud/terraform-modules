@@ -17,24 +17,28 @@ resource "aws_route53_record" "record" {
 # Waiter Block
 ##############################
 
-
-
-
-resource "null_resource" "resource_main" {
+resource "null_resource" "dns_check" {
   for_each = {
-    for record_key, record in var.Records :
-    record_key => record
-    if !var.ZonePrivate
+    for record in var.Records : "${record.Name}-${record.Type}" => record
   }
+  depends_on = [aws_route53_record.record]
   provisioner "local-exec" {
-    when    = create
+    when = create
     command = <<EOT
-echo "Probando el registro DNS ${each.value.Name} (${each.value.Type})..."
+echo "Comprobando si la zona ${var.Zone} es pública..."
+IS_PRIVATE=$(aws route53 get-hosted-zone --id ${var.Zone} --query "HostedZone.Config.PrivateZone" --output text)
+
+if [ "$IS_PRIVATE" = "true" ]; then
+  echo "Zona privada detectada. No se realiza comprobación DNS."
+  exit 0
+fi
+
+echo "Zona pública detectada. Probando el registro ${each.value.Name} (${each.value.Type})..."
 aws route53 test-dns-answer \
   --hosted-zone-id ${var.Zone} \
   --record-name ${each.value.Name} \
-  --record-type ${each.value.Type}
+  --record-type ${each.value.Type} \
+  --region ${var.aws_region}
 EOT
   }
-  depends_on = [aws_route53_record.record]
 }
