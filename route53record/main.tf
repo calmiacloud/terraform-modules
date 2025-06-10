@@ -27,10 +27,10 @@ resource "null_resource" "resource_main" {
     type   = each.value.Type
     value  = join(",", each.value.Records) # en caso de múltiples valores
   }
-  environment = {
-    TF_ACTION = terraform.workspace == "destroy" ? "destroy" : "apply"
-  }
   provisioner "local-exec" {
+    environment = {
+      TF_ACTION = terraform.workspace == "destroy" ? "destroy" : "apply"
+    }
     command = "bash ${path.module}/src/checkrecord.sh ${self.triggers.name} ${self.triggers.type} ${self.triggers.value}"
   }
 }
