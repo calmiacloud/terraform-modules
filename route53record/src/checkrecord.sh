@@ -21,6 +21,11 @@ PRIVATE_ZONE=$(aws route53 get-hosted-zone \
   --query 'HostedZone.Config.PrivateZone' \
   --output text)
 
+if [[ "$ACTION" == "destroy" ]]; then
+  echo "Acción 'destroy' detectada. Saliendo sin comprobar."
+  exit 0
+fi
+
 if [[ "$PRIVATE_ZONE" == "true" ]]; then
   echo "La zona DNS '$HOSTED_ZONE_ID' es privada. Abortando comprobación."
   exit 1
