@@ -21,7 +21,7 @@ resource "null_resource" "dns_check" {
   for_each = {
     for record in var.Records : "${record.Name}-${record.Type}" => record
   }
-  depends_on = [aws_route53_record.record]
+
   provisioner "local-exec" {
     when = create
     command = <<EOT
@@ -33,11 +33,14 @@ if [ "$IS_PRIVATE" = "true" ]; then
   exit 0
 fi
 
-echo "Zona pública detectada. Probando el registro ${each.value.Name} (${each.value.Type})..."
+FQDN="${each.value.Name}.${var.zone_name}"
+echo "Zona pública detectada. Probando el registro DNS ${FQDN} (${each.value.Type})..."
 aws route53 test-dns-answer \
   --hosted-zone-id ${var.Zone} \
-  --record-name ${each.value.Name} \
+  --record-name "${FQDN}" \
   --record-type ${each.value.Type}
 EOT
   }
+
+  depends_on = [aws_route53_record.record]
 }
