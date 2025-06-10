@@ -25,12 +25,19 @@ resource "null_resource" "resource_main" {
   triggers = {
     name   = each.value.Name
     type   = each.value.Type
-    value  = join(",", each.value.Records) # en caso de múltiples valores
+    value  = join(",", each.value.Records)
+    zone   = var.Zone
   }
   provisioner "local-exec" {
     environment = {
       TF_ACTION = terraform.workspace == "destroy" ? "destroy" : "apply"
     }
-    command = "bash ${path.module}/src/checkrecord.sh ${self.triggers.name} ${self.triggers.type} ${self.triggers.value}"
+    command = <<EOT
+      bash ${path.module}/src/checkrecord.sh \
+        "${self.triggers.name}" \
+        "${self.triggers.type}" \
+        "${self.triggers.value}" \
+        "${self.triggers.zone}"
+    EOT
   }
 }
