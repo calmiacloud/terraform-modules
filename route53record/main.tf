@@ -9,36 +9,26 @@ resource "aws_route53_record" "record" {
   name    = each.value.Name
   type    = each.value.Type
   ttl     = each.value.Ttl
-  records = each.value.Values   # aquí apuntamos a Values
+  records = each.value.Values
   zone_id = var.Zone
 }
-
 
 ##############################
 # Waiter Block
 ##############################
 
-
-resource "null_resource" "wait_record" {
+resource "null_resource" "check_route53_record" {
   for_each = aws_route53_record.record
-
+  triggers = {
+    record_name   = each.value.name
+    record_type   = each.value.type
+    record_values = join(",", each.value.records)
+    zone_id       = var.Zone
+  }
   depends_on = [
     aws_route53_record.record
   ]
-
-  triggers = {
-    name     = each.value.name
-    type     = each.value.type
-    expected = each.value.type == "TXT" ? join(" ", each.value.records) : join(",", each.value.records)
-    zone     = var.Zone
-  }
-
   provisioner "local-exec" {
-    environment = {
-      TF_ACTION = terraform.workspace == "destroy" ? "destroy" : "apply"
-    }
-
-    # Command en un solo string, comillas dobles para cada arg
-    command = "bash \"${path.module}/src/checkrecord.sh\" \"${each.value.name}\" \"${each.value.type}\" \"${self.triggers.expected}\" \"${var.Zone}\""
+    command     = "bash \"${path.module}/src/checkrecord.sh\" \"${var.Zone}\" \"${each.value.name}\" \"${each.value.type}\""
   }
 }
