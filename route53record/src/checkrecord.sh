@@ -1,11 +1,21 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# comprueba_record_route53.sh
+# Uso: ./comprueba_record_route53.sh <HOSTED_ZONE_ID> <RECORD_NAME> <RECORD_TYPE>
+# Ejemplo: ./comprueba_record_route53.sh Z123ABCDEF example.com. A
 
-# Parámetros
+set -euo pipefail
+
+# Validar parámetros
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+  echo "Uso: $0 <HOSTED_ZONE_ID> <RECORD_NAME> [RECORD_TYPE]"
+  exit 1
+fi
+
 HOSTED_ZONE_ID="$1"
 RECORD_NAME="$2"
 RECORD_TYPE="${3:-A}"
 
-# Comprobamos si la zona DNS es privada
+# Comprobar si la zona DNS es privada
 PRIVATE_ZONE=$(aws route53 get-hosted-zone \
   --id "$HOSTED_ZONE_ID" \
   --query 'HostedZone.Config.PrivateZone' \
@@ -18,11 +28,11 @@ fi
 
 echo "Zona DNS pública. Continúo con la comprobación..."
 
-# Número máximo de intentos y retardo entre ellos (segundos)
+# Configuración de reintentos
 MAX_RETRIES=5
 SLEEP_SECONDS=10
 
-echo "Comprobando registro Route 53:" 
+echo "Comprobando registro Route 53:"
 echo "  Zona alojada: $HOSTED_ZONE_ID"
 echo "  Nombre:       $RECORD_NAME"
 echo "  Tipo:         $RECORD_TYPE"
@@ -44,19 +54,21 @@ for ((i=1; i<=MAX_RETRIES; i++)); do
   echo "  ResponseCode: $RESPONSE_CODE"
   echo "  RecordData:   $RECORD_DATA"
 
-  # Comprobamos si está resuelto correctamente
+  # Verificar resolución correcta
   if [[ "$RESPONSE_CODE" == "NOERROR" && -n "$RECORD_DATA" ]]; then
-    echo -e "\nRegistro comprobado correctamente."
+    echo
+    echo "Registro comprobado correctamente."
     exit 0
   fi
 
-  # Si no hemos llegado al máximo, esperamos y repetimos
+  # Esperar antes de reintentar si no es el último intento
   if (( i < MAX_RETRIES )); then
-    echo "  Aún no resuelto, esperando $SLEEP_SECONDS s antes de reintentar..."
+    echo "  Aún no resuelto, esperando $SLEEP_SECONDS segundos antes de reintentar..."
     sleep "$SLEEP_SECONDS"
   fi
-</pre>
-</code>
 
-# Fin del script
+done
 
+echo
+ echo "No se pudo comprobar el registro tras $MAX_RETRIES intentos." >&2
+exit 1
