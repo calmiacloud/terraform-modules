@@ -38,26 +38,42 @@ START_TIME=$(date +%s)
 
 while :; do
   DIG_RAW=$(dig +short "$RECORD_NAME" "$RECORD_TYPE" @8.8.8.8)
-  RECORDS=($(echo "$DIG_RAW" | sed 's/^"//;s/"$//' | tr -d '"' | sort))
 
   echo -e "\e[36m--> Values returned by Google DNS:\e[0m"
-  if [[ ${#RECORDS[@]} -eq 0 ]]; then
+  if [[ -z "$DIG_RAW" ]]; then
     echo " (none)"
   else
-    for rec in "${RECORDS[@]}"; do echo " - $rec"; done
+    echo "$DIG_RAW" | sed 's/^"//;s/"$//' | tr -d '"' | while read -r line; do
+      echo " - $line"
+    done
   fi
 
-  ALL_FOUND=true
-  for expected in "${EXPECTED_VALUES[@]}"; do
-    if ! printf '%s\n' "${RECORDS[@]}" | grep -Fxq "$expected"; then
-      ALL_FOUND=false
+  # Lógica especial para TXT: unir fragmentos
+  if [[ "$RECORD_TYPE" == "TXT" ]]; then
+    RECORD_COMBINED=$(echo "$DIG_RAW" | tr -d '"' | paste -sd '' -)
+    echo -e "\e[36m--> Combined TXT value:\e[0m"
+    echo " - $RECORD_COMBINED"
+
+    if [[ "$RECORD_COMBINED" == "$EXPECTED_CSV" ]]; then
+      echo -e "\e[32m ✅ TXT record propagated successfully!\e[0m"
       break
     fi
-  done
+  else
+    # Lógica general para A, CNAME, etc.
+    RECORDS=($(echo "$DIG_RAW" | sed 's/^"//;s/"$//' | tr -d '"' | sort))
 
-  if [[ "$ALL_FOUND" == true ]]; then
-    echo -e "\e[32m ✅ All expected values found. Propagation complete!\e[0m"
-    break
+    ALL_FOUND=true
+    for expected in "${EXPECTED_VALUES[@]}"; do
+      if ! printf '%s\n' "${RECORDS[@]}" | grep -Fxq "$expected"; then
+        ALL_FOUND=false
+        break
+      fi
+    done
+
+    if [[ "$ALL_FOUND" == true ]]; then
+      echo -e "\e[32m ✅ Record propagated successfully!\e[0m"
+      break
+    fi
   fi
 
   NOW=$(date +%s)
