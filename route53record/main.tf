@@ -39,15 +39,6 @@ resource "null_resource" "wait_record" {
     }
 
     # Command en un solo string, comillas dobles para cada arg
-    command = "bash \"${path.module}/src/checkrecord.sh\" \
-\"${each.value.name}\" \
-\"${each.value.type}\" \
-\"${self.triggers.expected}\" \
-\"${var.Zone}\""
-  }
-
-  timeouts {
-    create = "20m"
+    command = "bash \"${path.module}/src/checkrecord.sh\" \"${each.value.name}\" \"${each.value.type}\" \"${self.triggers.expected}\" \"${var.Zone}\""
   }
 }
-
