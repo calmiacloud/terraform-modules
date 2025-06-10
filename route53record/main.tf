@@ -18,29 +18,36 @@ resource "aws_route53_record" "record" {
 # Waiter Block
 ##############################
 
+
 resource "null_resource" "wait_record" {
   for_each = aws_route53_record.record
+
   depends_on = [
     aws_route53_record.record
   ]
+
   triggers = {
     name     = each.value.name
     type     = each.value.type
-    # ¡Ternaria en UNA LÍNEA!
     expected = each.value.type == "TXT" ? join(" ", each.value.records) : join(",", each.value.records)
     zone     = var.Zone
   }
+
   provisioner "local-exec" {
     environment = {
       TF_ACTION = terraform.workspace == "destroy" ? "destroy" : "apply"
     }
-    command = [
-      "bash",
-      "${path.module}/src/checkrecord.sh",
-      "${each.value.name}",
-      "${each.value.type}",
-      "${self.triggers.expected}",
-      "${var.Zone}",
-    ]
+
+    # Command en un solo string, comillas dobles para cada arg
+    command = "bash \"${path.module}/src/checkrecord.sh\" \
+\"${each.value.name}\" \
+\"${each.value.type}\" \
+\"${self.triggers.expected}\" \
+\"${var.Zone}\""
+  }
+
+  timeouts {
+    create = "20m"
   }
 }
+
