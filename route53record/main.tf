@@ -38,6 +38,6 @@ resource "null_resource" "wait_record" {
     environment = {
       TF_ACTION = terraform.workspace == "destroy" ? "destroy" : "apply"
     }
-    command = bash ${path.module}/src/checkrecord.sh ${self.triggers.name} ${self.triggers.type} ${self.triggers.value} ${self.triggers.zone}"
+    command = "bash ${path.module}/src/checkrecord.sh ${self.triggers.name} ${self.triggers.type} ${self.triggers.value} ${self.triggers.zone}"
   }
 }
