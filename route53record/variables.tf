@@ -3,10 +3,9 @@ variable "Zone" {
 }
 
 variable "Records" {
-  type = list(object({
-    Name    = string
-    Type    = string            # A, CNAME, MX
+  type = map(object({
+    Type    = string
     Ttl     = number
-    Records = any               # lista de strings para A/CNAME, lista de objetos para MX
+    Records  = list(string)
   }))
 }
