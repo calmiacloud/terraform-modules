@@ -3,6 +3,13 @@
 RECORD_NAME=$1
 RECORD_TYPE=$2
 EXPECTED_CSV=$3
+ZONE_ID=$4
+
+if [[ -z "$RECORD_NAME" || -z "$RECORD_TYPE" || -z "$EXPECTED_CSV" || -z "$ZONE_ID" ]]; then
+  echo -e "\e[31mERROR: Missing arguments.\e[0m"
+  echo "Usage: ./wait_dns_record_google.sh <record_name> <record_type> <expected_value_csv> <zone_id>"
+  exit 1
+fi
 
 # 🚫 Omitir si estamos en terraform destroy
 if [[ "$TF_ACTION" == "destroy" ]]; then
@@ -10,21 +17,22 @@ if [[ "$TF_ACTION" == "destroy" ]]; then
   exit 0
 fi
 
-if [[ -z "$RECORD_NAME" || -z "$RECORD_TYPE" || -z "$EXPECTED_CSV" ]]; then
-  echo -e "\e[31mERROR: Missing arguments.\e[0m"
-  echo "Usage: ./wait_dns_record_google.sh <record_name> <record_type> <expected_value_1[,expected_value_2,...]>"
-  exit 1
+# 🚫 Omitir si la zona es privada
+IS_PRIVATE=$(aws route53 get-hosted-zone --id "$ZONE_ID" | jq -r '.HostedZone.Config.PrivateZone')
+
+if [[ "$IS_PRIVATE" == "true" ]]; then
+  echo -e "\e[33m[SKIP] Zone $ZONE_ID is private. Skipping DNS check.\e[0m"
+  exit 0
 fi
 
 IFS=',' read -ra EXPECTED_VALUES <<< "$EXPECTED_CSV"
 
 echo -e "\e[34m==> Checking DNS propagation for:\e[0m"
-echo -e "\e[34m    Name : $RECORD_NAME\e[0m"
-echo -e "\e[34m    Type : $RECORD_TYPE\e[0m"
+echo -e "\e[34m    Name : $RECORD_NAME"
+echo -e "\e[34m    Type : $RECORD_TYPE"
+echo -e "\e[34m    Zone : $ZONE_ID"
 echo -e "\e[34m    Expected values:\e[0m"
-for val in "${EXPECTED_VALUES[@]}"; do
-  echo " - $val"
-done
+for val in "${EXPECTED_VALUES[@]}"; do echo " - $val"; done
 
 START_TIME=$(date +%s)
 
