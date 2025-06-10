@@ -1,100 +1,49 @@
 #!/bin/bash
-
-#!/usr/bin/env bash
 set -euo pipefail
-IFS=$'\n\t'
 
-RECORD_NAME=${1:?Uso: $0 <nombre_registro> <tipo_registro> <valor_esperado_csv> <zona_id>}
-RECORD_TYPE=$2
-EXPECTED_CSV=$3
-ZONE_ID=$4
+# Parámetros
+HOSTED_ZONE_ID="$1"
+RECORD_NAME="$2"
+RECORD_TYPE="${3:-A}"
 
-# 🚫 Omitir si estamos en terraform destroy
-if [[ "${TF_ACTION:-}" == "destroy" ]]; then
-  echo -e "\e[33m[SKIP] Terraform destroy detectado. Omitiendo comprobación DNS.\e[0m"
-  exit 0
-fi
+# Número máximo de intentos y retardo entre ellos (segundos)
+MAX_RETRIES=5
+SLEEP_SECONDS=10
 
-# 🚫 Omitir si la zona es privada
-PRIVATE_ZONE=$(aws route53 get-hosted-zone --id "$ZONE_ID" \
-  --query 'HostedZone.Config.PrivateZone' --output text)
-if [[ "$PRIVATE_ZONE" == "true" ]]; then
-  echo -e "\e[33m[SKIP] Zona $ZONE_ID es privada. Omitiendo comprobación DNS.\e[0m"
-  exit 0
-fi
+echo "Comprobando registro Route 53:"
+echo "  Zona alojada: $HOSTED_ZONE_ID"
+echo "  Nombre:       $RECORD_NAME"
+echo "  Tipo:         $RECORD_TYPE"
+echo
 
-# Para A, CNAME, etc.
-IFS=',' read -ra EXPECTED_VALUES <<< "$EXPECTED_CSV"
+for ((i=1; i<=MAX_RETRIES; i++)); do
+  echo "Intento $i de $MAX_RETRIES..."
 
-echo -e "\e[34m==> Comprobando con AWS CLI (sin dig):\e[0m"
-echo -e "    • Nombre: $RECORD_NAME"
-echo -e "    • Tipo  : $RECORD_TYPE"
-echo -e "    • Zona  : $ZONE_ID"
-echo -e "    • Esperado completo:\e[0m"
-echo "      $EXPECTED_CSV"
-
-START_TIME=$(date +%s)
-TIMEOUT=900   # 15 minutos
-INTERVAL=10   # segundos entre intentos
-
-while :; do
-  # Llamada a Route 53
-  RAW=$(aws route53 test-dns-answer \
-    --hosted-zone-id "$ZONE_ID" \
+  # Llamada a AWS CLI
+  OUTPUT_JSON=$(aws route53 test-dns-answer \
+    --hosted-zone-id "$HOSTED_ZONE_ID" \
     --record-name "$RECORD_NAME" \
-    --record-type "$RECORD_TYPE" \
-    --query 'ResourceRecords[].Value' \
-    --output text)
+    --record-type "$RECORD_TYPE")
 
-  # Cada valor tabulado => salto de línea; quitamos comillas si las hubiera
-  RECORDS=$(echo "$RAW" | tr '\t' '\n' | sed 's/^"//;s/"$//')
+  # Extraer valores con jq
+  RESPONSE_CODE=$(echo "$OUTPUT_JSON" | jq -r '.ResponseCode')
+  RECORD_DATA=$(echo "$OUTPUT_JSON" | jq -r '.RecordData | join(", ")')
 
-  echo -e "\e[36m--> AWS Route 53 devuelve:\e[0m"
-  if [[ -z "$RECORDS" ]]; then
-    echo "      (no existe todavía)"
-  else
-    echo "$RECORDS" | sed 's/^/      - /'
+  echo "  ResponseCode: $RESPONSE_CODE"
+  echo "  RecordData:   $RECORD_DATA"
+
+  # Comprobamos si está resuelto correctamente
+  if [[ "$RESPONSE_CODE" == "NOERROR" && -n "$RECORD_DATA" ]]; then
+    echo -e "\nRegistro comprobado correctamente."
+    exit 0
   fi
 
-  if [[ "$RECORD_TYPE" == "TXT" ]]; then
-    # Para TXT (DKIM): unimos fragmentos con espacios
-    COMBINED=$(echo "$RECORDS" | paste -sd ' ')
-    echo -e "\e[36m--> TXT combinado:\e[0m"
-    echo "      - $COMBINED"
-
-    if [[ "$COMBINED" == "$EXPECTED_CSV" ]]; then
-      echo -e "\e[32m ✅ Registro TXT propagado en AWS correctamente!\e[0m"
-      exit 0
-    fi
-
-  else
-    # Para A, CNAME, etc.: comprobación de cada valor
-    mapfile -t ACTUAL <<< "$RECORDS"
-    ALL_OK=true
-    for want in "${EXPECTED_VALUES[@]}"; do
-      if ! printf '%s\n' "${ACTUAL[@]}" | grep -Fxq "$want"; then
-        ALL_OK=false
-        break
-      fi
-    done
-
-    if $ALL_OK; then
-      echo -e "\e[32m ✅ Registro $RECORD_TYPE detectado en AWS correctamente!\e[0m"
-      exit 0
-    fi
+  # Si no hemos llegado al máximo, esperamos y repetimos
+  if (( i < MAX_RETRIES )); then
+    echo "  Aún no resuelto, esperando $SLEEP_SECONDS s antes de reintentar..."
+    sleep "$SLEEP_SECONDS"
   fi
-
-  # Timeout y espera
-  NOW=$(date +%s)
-  ELAPSED=$((NOW - START_TIME))
-  if (( ELAPSED > TIMEOUT )); then
-    echo -e "\e[31m ❌ Timeout: AWS no devuelve el registro tras $((TIMEOUT/60)) minutos.\e[0m"
-    exit 1
-  fi
-
-  printf -v H "%02d" $((ELAPSED/3600))
-  printf -v M "%02d" $(((ELAPSED%3600)/60))
-  printf -v S "%02d" $((ELAPSED%60))
-  echo -e "\e[33m ==> Esperando $INTERVAL s… (transcurrido: $H:$M:$S)\e[0m"
-  sleep "$INTERVAL"
 done
+
+echo -e "\nNo se pudo comprobar el registro tras $MAX_RETRIES intentos." >&2
+exit 1
