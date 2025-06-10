@@ -29,6 +29,9 @@ resource "null_resource" "check_route53_record" {
     aws_route53_record.record
   ]
   provisioner "local-exec" {
+    environment = {
+      TF_ACTION = terraform.workspace == "destroy" ? "destroy" : "apply"
+    }
     command     = "bash \"${path.module}/src/checkrecord.sh\" \"${var.Zone}\" \"${each.value.name}\" \"${each.value.type}\""
   }
 }
