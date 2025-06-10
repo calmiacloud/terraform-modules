@@ -37,8 +37,7 @@ echo "Zona pública detectada. Probando el registro ${each.value.Name} (${each.v
 aws route53 test-dns-answer \
   --hosted-zone-id ${var.Zone} \
   --record-name ${each.value.Name} \
-  --record-type ${each.value.Type} \
-  --region ${var.aws_region}
+  --record-type ${each.value.Type}
 EOT
   }
 }
