@@ -26,10 +26,8 @@ resource "null_resource" "wait_record" {
   triggers = {
     name     = each.value.name
     type     = each.value.type
-    # join con espacio si es TXT, con coma en otro caso
-    expected = each.value.type == "TXT"
-      ? join(" ", each.value.records)
-      : join(",", each.value.records)
+    # ¡Ternaria en UNA LÍNEA!
+    expected = each.value.type == "TXT" ? join(" ", each.value.records) : join(",", each.value.records)
     zone     = var.Zone
   }
   provisioner "local-exec" {
@@ -39,10 +37,10 @@ resource "null_resource" "wait_record" {
     command = [
       "bash",
       "${path.module}/src/checkrecord.sh",
-      each.value.name,
-      each.value.type,
-      each.value.expected,
-      var.Zone,
+      "${each.value.name}",
+      "${each.value.type}",
+      "${self.triggers.expected}",
+      "${var.Zone}",
     ]
   }
 }
