@@ -28,7 +28,9 @@ resource "null_resource" "resource_main" {
   triggers = {
     name  = each.value.Name
     type  = each.value.Type
-    value = join(",", each.value.Values)
+    value = each.value.Type == "TXT"
+      ? join(" ", each.value.Values)
+      : join(",", each.value.Values)
     zone  = var.Zone
   }
 
