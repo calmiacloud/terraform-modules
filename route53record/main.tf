@@ -17,21 +17,24 @@ resource "aws_route53_record" "record" {
 # Waiter Block
 ##############################
 
-resource "null_resource" "check_route53_record" {
-  for_each = aws_route53_record.record
-  triggers = {
-    record_name   = each.value.name
-    record_type   = each.value.type
-    record_values = join(",", each.value.records)
-    zone_id       = var.Zone
+
+
+
+resource "null_resource" "resource_main" {
+  for_each = {
+    for record_key, record in var.Records :
+    record_key => record
+    if !var.ZonePrivate
   }
-  depends_on = [
-    aws_route53_record.record
-  ]
   provisioner "local-exec" {
-    environment = {
-      TF_ACTION = terraform.workspace == "destroy" ? "destroy" : "apply"
-    }
-    command     = "bash \"${path.module}/src/checkrecord.sh\" \"${var.Zone}\" \"${each.value.name}\" \"${each.value.type}\""
+    when    = create
+    command = <<EOT
+echo "Probando el registro DNS ${each.value.Name} (${each.value.Type})..."
+aws route53 test-dns-answer \
+  --hosted-zone-id ${var.Zone} \
+  --record-name ${each.value.Name} \
+  --record-type ${each.value.Type}
+EOT
   }
+  depends_on = [aws_route53_record.record]
 }
