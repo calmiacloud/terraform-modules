@@ -17,6 +17,7 @@ resource "aws_route53_record" "record" {
 # Waiter Block
 ##############################
 
+
 resource "null_resource" "dns_check" {
   for_each = {
     for record in var.Records : "${record.Name}-${record.Type}" => record
@@ -25,15 +26,24 @@ resource "null_resource" "dns_check" {
   provisioner "local-exec" {
     when = create
     command = <<EOT
-echo "Comprobando si la zona ${var.Zone} es pública..."
-IS_PRIVATE=$(aws route53 get-hosted-zone --id ${var.Zone} --query "HostedZone.Config.PrivateZone" --output text)
+echo "Obteniendo información de la zona ${var.Zone}..."
+ZONE_INFO=$(aws route53 get-hosted-zone --id ${var.Zone})
+IS_PRIVATE=$(echo "$ZONE_INFO" | jq -r '.HostedZone.Config.PrivateZone')
+ZONE_NAME=$(echo "$ZONE_INFO" | jq -r '.HostedZone.Name')
 
 if [ "$IS_PRIVATE" = "true" ]; then
-  echo "Zona privada detectada. No se realiza comprobación DNS."
+  echo "Zona privada detectada (${ZONE_NAME}). No se realiza comprobación DNS."
   exit 0
 fi
 
-FQDN="${each.value.Name}.${var.zone_name}"
+# Asegura que no haya doble punto si ya viene como FQDN
+RECORD_NAME="${each.value.Name}"
+if [[ "$RECORD_NAME" != *"." ]]; then
+  FQDN="${RECORD_NAME}.${ZONE_NAME}"
+else
+  FQDN="$RECORD_NAME"
+fi
+
 echo "Zona pública detectada. Probando el registro DNS ${FQDN} (${each.value.Type})..."
 aws route53 test-dns-answer \
   --hosted-zone-id ${var.Zone} \
@@ -44,3 +54,4 @@ EOT
 
   depends_on = [aws_route53_record.record]
 }
+d
