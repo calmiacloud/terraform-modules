@@ -19,7 +19,7 @@ resource "aws_route53_zone" "zone" {
 # Waiter Block
 ##############################
 
-resource "null_resource" "resource_main" {
+resource "null_resource" "nullresource_main" {
   depends_on = [aws_route53_zone.zone]
   provisioner "local-exec" {
     when    = create
