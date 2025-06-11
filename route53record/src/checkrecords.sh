@@ -7,11 +7,10 @@ RECORD_TYPE="$3"
 echo -e "\e[34m🔍 Retrieving information for hosted zone ${ZONE_ID}...\e[0m"
 ZONE_INFO=$(aws route53 get-hosted-zone --id "${ZONE_ID}")
 IS_PRIVATE=$(echo "$ZONE_INFO" | jq -r '.HostedZone.Config.PrivateZone')
-ZONE_NAME=$(echo "$ZONE_INFO" | jq -r '.HostedZone.Name')
-FQDN="${RECORD_NAME}.${ZONE_NAME%.}"
+FQDN="${RECORD_NAME%.}"
 
 if [ "$IS_PRIVATE" = "true" ]; then
-  echo -e "\e[36mℹ️  Private zone detected (${ZONE_NAME}). DNS check will be skipped.\e[0m"
+  echo -e "\e[36mℹ️  Private zone detected. DNS check will be skipped.\e[0m"
   exit 0
 fi
 
