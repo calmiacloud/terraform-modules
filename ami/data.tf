@@ -11,5 +11,5 @@ data "aws_ami" "data_ami" {
     name   = "state"
     values = ["available"]
   }
-  depends_on = [null_resource.resource_main]
+  depends_on = [null_resource.nullresource_main]
 }
