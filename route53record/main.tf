@@ -54,4 +54,3 @@ EOT
 
   depends_on = [aws_route53_record.record]
 }
-d
