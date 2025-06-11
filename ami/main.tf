@@ -260,21 +260,17 @@ resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
 
 resource "null_resource" "resource_main" {
   triggers = {
-    playbook_md5 = sha256(join("", [
-      for file in fileset(var.Source, "**/*") :
-      filemd5("${var.Source}/${file}")
-    ]))
+    playbook_md5      = sha256(join("", [for file in fileset(var.Source, "**/*") : filemd5("${var.Source}/${file}")]))
     extra_vars_sha256 = sha256(jsonencode(var.ExtraVars))
+    pipeline_arn      = aws_imagebuilder_image_pipeline.pipeline_main.arn
   }
-  depends_on = [
-    aws_imagebuilder_image_pipeline.pipeline_main
-  ]
+  depends_on = [aws_imagebuilder_image_pipeline.pipeline_main]
   provisioner "local-exec" {
     when    = create
-    command = "bash ${path.module}/src/create.sh ${aws_imagebuilder_image_pipeline.pipeline_main.arn}"
+    command = "bash ${path.module}/src/create.sh ${self.triggers.pipeline_arn}"
   }
   provisioner "local-exec" {
     when    = destroy
-    command = "bash ${path.module}/src/destroy.sh ${aws_imagebuilder_image_pipeline.pipeline_main.arn}"
+    command = "bash ${path.module}/src/destroy.sh ${self.triggers.pipeline_arn}"
   }
 }
