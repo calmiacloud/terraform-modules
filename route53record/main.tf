@@ -17,15 +17,13 @@ resource "aws_route53_record" "record" {
 # Waiter Block
 ##############################
 
-resource "null_resource" "dns_check" {
+resource "null_resource" "resource_main" {
   for_each = {
     for record in var.Records : "${record.Name}-${record.Type}" => record
   }
-
   provisioner "local-exec" {
     when    = create
     command = "bash ${path.module}/src/checkrecords.sh ${var.Zone} ${each.value.Name} ${each.value.Type}"
   }
-
   depends_on = [aws_route53_record.record]
 }

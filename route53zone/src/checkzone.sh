@@ -4,14 +4,7 @@ ZONE_ID=$1
 
 if [[ -z "$ZONE_ID" ]]; then
   echo -e "\e[31mERROR: Route 53 Zone ID was not provided.\e[0m"
-  echo "Usage: ./wait_ns_google.sh <zone_id>"
   exit 1
-fi
-
-# 🚫 Omitir si estamos en terraform destroy
-if [[ "$TF_ACTION" == "destroy" ]]; then
-  echo -e "\e[33m[SKIP] Terraform destroy detected. Skipping DNS check.\e[0m"
-  exit 0
 fi
 
 ZONE_INFO=$(aws route53 get-hosted-zone --id "$ZONE_ID")

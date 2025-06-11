@@ -22,9 +22,7 @@ resource "aws_route53_zone" "zone" {
 resource "null_resource" "resource_main" {
   depends_on = [aws_route53_zone.zone]
   provisioner "local-exec" {
-    environment = {
-      TF_ACTION = terraform.workspace == "destroy" ? "destroy" : "apply"
-    }
+    when    = create
     command = "bash ${path.module}/src/checkzone.sh ${aws_route53_zone.zone.id}"
   }
 }
