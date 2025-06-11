@@ -17,7 +17,7 @@ resource "aws_route53_record" "record" {
 # Waiter Block
 ##############################
 
-resource "null_resource" "resource_main" {
+resource "null_resource" "nullresource_main" {
   for_each = {
     for record in var.Records : "${record.Name}-${record.Type}" => record
   }
