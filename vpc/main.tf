@@ -79,13 +79,33 @@ resource "aws_eip" "eip_ig_nat" {
   })
 }
 
-resource "aws_nat_gateway" "ig_nat" {
-  count         = length(flatten([for _, cidrs in lookup(var.Subnets, "Nat", {}) : cidrs])) > 0 ? 1 : 0
-  allocation_id = aws_eip.eip_ig_nat[0].id
-  subnet_id     = aws_subnet.subnet_public[0].id
+resource "aws_instance" "nat" {
+  ami                    = data.aws_ami.nat.id
+  instance_type          = "t4g.nano"
+  subnet_id              = aws_subnet.subnet_public[0].id
+  associate_public_ip_address = false
+  source_dest_check      = false
+
+  # Configurar forwarding e iptables
+  user_data = <<-EOF
+    #!/bin/bash
+    # Habilita forwarding IPv4
+    sysctl -w net.ipv4.ip_forward=1
+    # Instala iptables y configura masquerading
+    yum install -y iptables-services
+    iptables -t nat -A POSTROUTING -o ens5 -j MASQUERADE
+    # Persiste reglas
+    service iptables save
+  EOF
+
   tags = merge(var.Tags, {
     Name = "Ign${var.Name}"
   })
+}
+
+resource "aws_eip_association" "nat" {
+  instance_id   = aws_instance.nat.id
+  allocation_id = aws_eip.nat.id
 }
 
 #################################
@@ -116,7 +136,7 @@ resource "aws_route_table" "rt_nat" {
   vpc_id = aws_vpc.vpc.id
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.ig_nat[0].id
+    instance_id = aws_instance.nat.id
   }
   tags = merge(var.Tags, {
     Name = "RtNat${var.Name}"
