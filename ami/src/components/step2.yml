@@ -1,4 +1,4 @@
-name: AmiComponentDownloadPlaybook
+name: step2
 schemaVersion: "1.0"
 
 parameters:

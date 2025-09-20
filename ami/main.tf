@@ -3,7 +3,7 @@
 ##############################
 
 resource "aws_s3_bucket" "s3" {
-  bucket        = "${var.project.name}-${var.service}-${var.project.environment}-s3-playbook"
+  bucket        = "${var.project.name}-${var.service}-${var.project.environment}-s3-imagebuilder"
   force_destroy = true
   lifecycle {
     precondition {
@@ -16,7 +16,7 @@ resource "aws_s3_bucket" "s3" {
 resource "aws_s3_object" "objects" {
   for_each = { for file in fileset(var.playbooks_dir, "**/*") : file => file }
   bucket = aws_s3_bucket.bucket.bucket
-  key    = "playbook/${each.key}"
+  key    = "${each.key}"
   source = "${var.playbooks_dir}/${each.key}"
   etag   = filemd5("${var.playbooks_dir}/${each.key}")
 }
@@ -26,7 +26,7 @@ resource "aws_s3_object" "objects" {
 ##############################
 
 resource "aws_iam_policy" "policy_s3" {
-  name   = "${var.project.name}-${var.service}-${var.project.environment}-policy-s3-playbook"
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-policy-s3-imagebuilder"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement: [
@@ -36,7 +36,7 @@ resource "aws_iam_policy" "policy_s3" {
           "s3:GetObject",
           "s3:HeadObject"
         ],
-        Resource = "${aws_s3_bucket.s3.arn}/playbook/*"
+        Resource = "${aws_s3_bucket.s3.arn}/*"
       },
       {
         Effect = "Allow",
@@ -50,7 +50,7 @@ resource "aws_iam_policy" "policy_s3" {
 }
 
 resource "aws_iam_role_policy" "policy_imagebuilder" {
-  name = "PolicyImagebuilder${var.name}"
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-policy-imagebuilder"
   role = aws_iam_role.role_ssm.name
   policy = jsonencode({
     Version = "2012-10-17"
@@ -67,10 +67,9 @@ resource "aws_iam_role_policy" "policy_imagebuilder" {
           "imagebuilder:GetImage"
         ]
         Resource = [
-          aws_imagebuilder_component.component_basicpackages.arn,
-          aws_imagebuilder_component.component_installansible.arn,
-          aws_imagebuilder_component.component_downloadplaybook.arn,
-          aws_imagebuilder_component.component_runplaybookreboot.arn,
+          aws_imagebuilder_component.component_step1.arn,
+          aws_imagebuilder_component.component_step2.arn,
+          aws_imagebuilder_component.component_step3.arn,
           aws_imagebuilder_image_recipe.recipe_main.arn,
           aws_imagebuilder_infrastructure_configuration.infra_main.arn,
           aws_imagebuilder_distribution_configuration.distribution_main.arn
@@ -81,7 +80,7 @@ resource "aws_iam_role_policy" "policy_imagebuilder" {
 }
 
 resource "aws_iam_role" "role_ssm" {
-  name = "RoleSsmAmi${var.name}"
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-role-ssm-imagebuilder"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -99,7 +98,7 @@ resource "aws_iam_role" "role_ssm" {
 }
 
 resource "aws_iam_instance_profile" "instanceprofile_main" {
-  name = "InstanceprofileSsmAmi${var.name}"
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-instanceprofile-imagebuilder"
   role = aws_iam_role.role_ssm.name
 }
 
@@ -107,32 +106,25 @@ resource "aws_iam_instance_profile" "instanceprofile_main" {
 # Components Block
 ##############################
 
-resource "aws_imagebuilder_component" "component_basicpackages" {
-  name = "ComponentBasicPackages${var.name}"
+resource "aws_imagebuilder_component" "component_step1" {
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-component-step1"
   version  = "1.0.0"
   platform = "Linux"
-  data     = file("${path.module}/src/components/basic_packages.yml")
+  data     = file("${path.module}/src/components/step1.yml")
 }
 
-resource "aws_imagebuilder_component" "component_installansible" {
-  name = "ComponentInstallAnsible${var.name}"
+resource "aws_imagebuilder_component" "component_step2" {
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-component-step2"
   version  = "1.0.0"
   platform = "Linux"
-  data     = file("${path.module}/src/components/install_ansible.yml")
+  data     = file("${path.module}/src/components/step2.yml")
 }
 
-resource "aws_imagebuilder_component" "component_downloadplaybook" {
-  name = "ComponentDownloadplaybook${var.name}"
+resource "aws_imagebuilder_component" "component_step3" {
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-component-step3"
   version  = "1.0.0"
   platform = "Linux"
-  data     = file("${path.module}/src/components/download_playbook.yml")
-}
-
-resource "aws_imagebuilder_component" "component_runplaybookreboot" {
-  name = "ComponentRunplaybook${var.name}"
-  version  = "1.0.0"
-  platform = "Linux"
-  data     = file("${path.module}/src/components/run_playbook_reboot.yml")
+  data     = file("${path.module}/src/components/step3.yml")
 }
 
 ##############################
@@ -143,11 +135,9 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
   name = "Recipe${var.name}"
   version      = "1.0.0"
   parent_image = var.instance.ParentImage
-  component { component_arn = aws_imagebuilder_component.component_basicpackages.arn }
-  #component { component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/aws-cli-version-2-linux/1.0.4/1" }
-  component { component_arn = aws_imagebuilder_component.component_installansible.arn }
+  component { component_arn = aws_imagebuilder_component.component_step1.arn }
   component {
-    component_arn = aws_imagebuilder_component.component_downloadplaybook.arn
+    component_arn = aws_imagebuilder_component.component_step2.arn
     parameter {
       name  = "S3Bucket"
       value = aws_s3_bucket.bucket.bucket
@@ -158,7 +148,7 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
     }
   }
   component {
-    component_arn = aws_imagebuilder_component.component_runplaybookreboot.arn
+    component_arn = aws_imagebuilder_component.component_step3.arn
     parameter {
       name  = "ExtraVars"
       value = jsonencode(var.extravars)

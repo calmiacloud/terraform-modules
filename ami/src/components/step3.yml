@@ -2,9 +2,9 @@ name: AmiComponentRunPlaybookReboot
 schemaVersion: "1.0"
 
 parameters:
-  - ExtraVars:
+  - extravars:
       type: string
-  - PlaybookPath:
+  - playbooks_dir:
       type: string
 
 phases:
@@ -16,9 +16,8 @@ phases:
           commands:
             - |
               cat << 'EOF_EXTRAVARS' > /tmp/extravars.json
-              {{ ExtraVars }}
+              {{ playbooks_dir }}
               EOF_EXTRAVARS
-
       - name: RunPlaybook
         action: ExecuteBash
         inputs:
@@ -29,12 +28,10 @@ phases:
                 -c local \
                 -e 'ansible_python_interpreter=/usr/bin/python3' \
                 -e @/tmp/extravars.json \
-                {{ PlaybookPath }}
-
+                {{ playbooks_dir }}
       - name: Reboot
         action: Reboot
         onFailure: Abort
-
       - name: PostReboot
         action: ExecuteBash
         inputs:

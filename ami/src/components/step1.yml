@@ -1,4 +1,4 @@
-name: AmiComponentBasicPackages
+name: step1
 schemaVersion: "1.0"
 
 phases:
@@ -18,3 +18,8 @@ phases:
         inputs:
           commands:
             - echo 'The system has restarted successfully.'
+      - name: Install
+        action: ExecuteBash
+        inputs:
+          commands:
+            - sudo yum install -y ansible
