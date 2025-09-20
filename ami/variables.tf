@@ -1,4 +1,11 @@
-variable "name" {
+variable "project" {
+  type = object({
+    name        = string
+    environment = string
+  })
+}
+
+variable "service" {
   type = string
 }
 
@@ -19,8 +26,4 @@ variable "instance" {
 variable "extravars" {
   type    = any
   default = {}
-}
-
-variable "tags" {
-  type = any
 }

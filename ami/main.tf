@@ -2,16 +2,8 @@
 # Bucket
 ##############################
 
-resource "random_string" "random_bucket" {
-  length  = 8
-  upper   = false
-  lower   = true
-  numeric  = true
-  special = false
-}
-
-resource "aws_s3_bucket" "bucket" {
-  bucket        = lower("bucketami${var.name}-${random_string.random_bucket.result}")
+resource "aws_s3_bucket" "s3" {
+  bucket        = "${var.project.name}-${var.service}-${var.project.environment}-s3-playbook"
   force_destroy = true
   lifecycle {
     precondition {
@@ -33,8 +25,8 @@ resource "aws_s3_object" "objects" {
 # Policies and Instance Profile
 ##############################
 
-resource "aws_iam_policy" "policy_bucket" {
-  name   = "PolicyBucket${var.name}"
+resource "aws_iam_policy" "policy_s3" {
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-policy-s3-playbook"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement: [
@@ -44,7 +36,7 @@ resource "aws_iam_policy" "policy_bucket" {
           "s3:GetObject",
           "s3:HeadObject"
         ],
-        Resource = "${aws_s3_bucket.bucket.arn}/playbook/*"
+        Resource = "${aws_s3_bucket.s3.arn}/playbook/*"
       },
       {
         Effect = "Allow",
@@ -102,7 +94,7 @@ resource "aws_iam_role" "role_ssm" {
   })
   managed_policy_arns = [
     "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
-    aws_iam_policy.policy_bucket.arn,
+    aws_iam_policy.policy_s3.arn,
   ]
 }
 
