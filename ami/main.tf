@@ -3,7 +3,7 @@
 ##############################
 
 resource "aws_s3_bucket" "s3" {
-  bucket        = "${var.project.name}-${var.service}-${var.project.environment}-s3-imagebuilder"
+  bucket        = "${var.project.name}-${var.service}-${var.project.environment}-imagebuilder-s3"
   force_destroy = true
   lifecycle {
     precondition {
@@ -26,7 +26,7 @@ resource "aws_s3_object" "objects" {
 ##############################
 
 resource "aws_iam_policy" "policy_s3" {
-  name   = "${var.project.name}-${var.service}-${var.project.environment}-policy-s3-imagebuilder"
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-policy-imagebuilder-s3"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement: [
@@ -50,7 +50,7 @@ resource "aws_iam_policy" "policy_s3" {
 }
 
 resource "aws_iam_role_policy" "policy_imagebuilder" {
-  name   = "${var.project.name}-${var.service}-${var.project.environment}-policy-imagebuilder"
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-policy-imagebuilder-main"
   role = aws_iam_role.role_ssm.name
   policy = jsonencode({
     Version = "2012-10-17"
@@ -80,7 +80,7 @@ resource "aws_iam_role_policy" "policy_imagebuilder" {
 }
 
 resource "aws_iam_role" "role_ssm" {
-  name   = "${var.project.name}-${var.service}-${var.project.environment}-role-ssm-imagebuilder"
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-role-imagebuilder-ssm"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -98,7 +98,7 @@ resource "aws_iam_role" "role_ssm" {
 }
 
 resource "aws_iam_instance_profile" "instanceprofile_main" {
-  name   = "${var.project.name}-${var.service}-${var.project.environment}-instanceprofile-imagebuilder"
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-imagebuilder-instanceprofile"
   role = aws_iam_role.role_ssm.name
 }
 
@@ -107,21 +107,21 @@ resource "aws_iam_instance_profile" "instanceprofile_main" {
 ##############################
 
 resource "aws_imagebuilder_component" "component_step1" {
-  name   = "${var.project.name}-${var.service}-${var.project.environment}-component-step1"
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-imagebuilder-component-step1"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/step1.yml")
 }
 
 resource "aws_imagebuilder_component" "component_step2" {
-  name   = "${var.project.name}-${var.service}-${var.project.environment}-component-step2"
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-imagebuilder-component-step2"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/step2.yml")
 }
 
 resource "aws_imagebuilder_component" "component_step3" {
-  name   = "${var.project.name}-${var.service}-${var.project.environment}-component-step3"
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-imagebuilder-component-step3"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/step3.yml")
@@ -133,6 +133,7 @@ resource "aws_imagebuilder_component" "component_step3" {
 
 resource "aws_imagebuilder_image_recipe" "recipe_main" {
   name = "Recipe${var.name}"
+  name   = "${var.project.name}-${var.service}-${var.project.environment}-imagebuilder-recipe"
   version      = "1.0.0"
   parent_image = var.instance.ParentImage
   component { component_arn = aws_imagebuilder_component.component_step1.arn }
