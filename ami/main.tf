@@ -11,25 +11,22 @@ resource "random_string" "random_bucket" {
 }
 
 resource "aws_s3_bucket" "bucket" {
-  bucket        = lower("bucketami${var.Name}-${random_string.random_bucket.result}")
+  bucket        = lower("bucketami${var.name}-${random_string.random_bucket.result}")
   force_destroy = true
   lifecycle {
     precondition {
-      condition     = contains(fileset(var.Source, "**/*"), "main.yml")
-      error_message = "main.yml not found in ${var.Source}"
+      condition     = contains(fileset(var.playbooks_dir, "**/*"), "main.yml")
+      error_message = "main.yml not found in ${var.playbooks_dir}"
     }
   }
-  tags = merge(var.Tags, {
-    Name = var.Name
-  })
 }
 
 resource "aws_s3_object" "objects" {
-  for_each = { for file in fileset(var.Source, "**/*") : file => file }
+  for_each = { for file in fileset(var.playbooks_dir, "**/*") : file => file }
   bucket = aws_s3_bucket.bucket.bucket
   key    = "playbook/${each.key}"
-  source = "${var.Source}/${each.key}"
-  etag   = filemd5("${var.Source}/${each.key}")
+  source = "${var.playbooks_dir}/${each.key}"
+  etag   = filemd5("${var.playbooks_dir}/${each.key}")
 }
 
 ##############################
@@ -37,7 +34,7 @@ resource "aws_s3_object" "objects" {
 ##############################
 
 resource "aws_iam_policy" "policy_bucket" {
-  name   = "PolicyBucket${var.Name}"
+  name   = "PolicyBucket${var.name}"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement: [
@@ -58,13 +55,10 @@ resource "aws_iam_policy" "policy_bucket" {
       }
     ]
   })
-  tags = merge(var.Tags, {
-    Name = var.Name
-  })
 }
 
 resource "aws_iam_role_policy" "policy_imagebuilder" {
-  name = "PolicyImagebuilder${var.Name}"
+  name = "PolicyImagebuilder${var.name}"
   role = aws_iam_role.role_ssm.name
   policy = jsonencode({
     Version = "2012-10-17"
@@ -95,7 +89,7 @@ resource "aws_iam_role_policy" "policy_imagebuilder" {
 }
 
 resource "aws_iam_role" "role_ssm" {
-  name = "RoleSsmAmi${var.Name}"
+  name = "RoleSsmAmi${var.name}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -110,13 +104,10 @@ resource "aws_iam_role" "role_ssm" {
     "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
     aws_iam_policy.policy_bucket.arn,
   ]
-  tags = merge(var.Tags, {
-    Name = var.Name
-  })
 }
 
 resource "aws_iam_instance_profile" "instanceprofile_main" {
-  name = "InstanceprofileSsmAmi${var.Name}"
+  name = "InstanceprofileSsmAmi${var.name}"
   role = aws_iam_role.role_ssm.name
 }
 
@@ -125,43 +116,31 @@ resource "aws_iam_instance_profile" "instanceprofile_main" {
 ##############################
 
 resource "aws_imagebuilder_component" "component_basicpackages" {
-  name = "ComponentBasicPackages${var.Name}"
+  name = "ComponentBasicPackages${var.name}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/basic_packages.yml")
-  tags = merge(var.Tags, {
-    Name = var.Name
-  })
 }
 
 resource "aws_imagebuilder_component" "component_installansible" {
-  name = "ComponentInstallAnsible${var.Name}"
+  name = "ComponentInstallAnsible${var.name}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/install_ansible.yml")
-  tags = merge(var.Tags, {
-    Name = var.Name
-  })
 }
 
 resource "aws_imagebuilder_component" "component_downloadplaybook" {
-  name = "ComponentDownloadplaybook${var.Name}"
+  name = "ComponentDownloadplaybook${var.name}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/download_playbook.yml")
-  tags = merge(var.Tags, {
-    Name = var.Name
-  })
 }
 
 resource "aws_imagebuilder_component" "component_runplaybookreboot" {
-  name = "ComponentRunplaybook${var.Name}"
+  name = "ComponentRunplaybook${var.name}"
   version  = "1.0.0"
   platform = "Linux"
   data     = file("${path.module}/src/components/run_playbook_reboot.yml")
-  tags = merge(var.Tags, {
-    Name = var.Name
-  })
 }
 
 ##############################
@@ -169,7 +148,7 @@ resource "aws_imagebuilder_component" "component_runplaybookreboot" {
 ##############################
 
 resource "aws_imagebuilder_image_recipe" "recipe_main" {
-  name = "Recipe${var.Name}"
+  name = "Recipe${var.name}"
   version      = "1.0.0"
   parent_image = var.Instance.ParentImage
   component { component_arn = aws_imagebuilder_component.component_basicpackages.arn }
@@ -190,16 +169,13 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
     component_arn = aws_imagebuilder_component.component_runplaybookreboot.arn
     parameter {
       name  = "ExtraVars"
-      value = jsonencode(var.ExtraVars)
+      value = jsonencode(var.extravars)
     }
     parameter {
       name  = "PlaybookPath"
       value = "/tmp/playbook/main.yml"
     }
   }
-  tags = merge(var.Tags, {
-    Name = var.Name
-  })
 }
 
 ##############################
@@ -207,7 +183,7 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
 ##############################
 
 resource "aws_imagebuilder_infrastructure_configuration" "infra_main" {
-  name = "Infrastructure${var.Name}"
+  name = "Infrastructure${var.name}"
   instance_profile_name = aws_iam_instance_profile.instanceprofile_main.name
   instance_types       = [var.Instance.InstanceType]
   subnet_id            = var.Instance.Subnet
@@ -220,19 +196,13 @@ resource "aws_imagebuilder_infrastructure_configuration" "infra_main" {
 ##############################
 
 resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
-  name = "Distribution${var.Name}"
+  name = "Distribution${var.name}"
   distribution {
     region = data.aws_region.current.name
     ami_distribution_configuration {
-      name        = "Ami${var.Name}{{ imagebuilder:buildDate }}"
-      ami_tags = merge(var.Tags, {
-        Name = var.Name
-      })
+      name        = "Ami${var.name}{{ imagebuilder:buildDate }}"
     }
   }
-  tags = merge(var.Tags, {
-    Name = var.Name
-  })
 }
 
 ##############################
@@ -240,7 +210,7 @@ resource "aws_imagebuilder_distribution_configuration" "distribution_main" {
 ##############################
 
 resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
-  name = "Pipeline${var.Name}"
+  name = "Pipeline${var.name}"
   image_recipe_arn                    = aws_imagebuilder_image_recipe.recipe_main.arn
   infrastructure_configuration_arn    = aws_imagebuilder_infrastructure_configuration.infra_main.arn
   distribution_configuration_arn   = aws_imagebuilder_distribution_configuration.distribution_main.arn
@@ -260,8 +230,8 @@ resource "aws_imagebuilder_image_pipeline" "pipeline_main" {
 
 resource "null_resource" "nullresource_main" {
   triggers = {
-    playbook_md5      = sha256(join("", [for file in fileset(var.Source, "**/*") : filemd5("${var.Source}/${file}")]))
-    extra_vars_sha256 = sha256(jsonencode(var.ExtraVars))
+    playbook_md5      = sha256(join("", [for file in fileset(var.playbooks_dir, "**/*") : filemd5("${var.playbooks_dir}/${file}")]))
+    extra_vars_sha256 = sha256(jsonencode(var.extravars))
     pipeline_arn      = aws_imagebuilder_image_pipeline.pipeline_main.arn
   }
   depends_on = [aws_imagebuilder_image_pipeline.pipeline_main]

@@ -1,30 +1,26 @@
-variable "Name" {
-  type        = string
+variable "name" {
+  type = string
 }
 
-variable "Source" {
-  type  = string
+variable "playbooks_dir" {
+  type = string
 }
 
-variable "Instance" {
+variable "instance" {
   type = object({
-    ParentImage    = string
-    InstanceType   = string
-    KeyPair        = string
-    Subnet         = string
-    SecurityGroup  = string
+    parentami     = string
+    instancetype  = string
+    keypair       = string
+    subnet        = string
+    securitygroup = string
   })
 }
 
-variable "ExtraVars" {
+variable "extravars" {
   type    = any
   default = {}
 }
 
-variable "Tags" {
-  type = object({
-    Project = string
-    Repo    = string
-    Stage   = string
-  })
+variable "tags" {
+  type = any
 }
