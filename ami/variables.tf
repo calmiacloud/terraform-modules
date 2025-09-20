@@ -9,7 +9,7 @@ variable "playbooks_dir" {
 variable "instance" {
   type = object({
     parentami     = string
-    instancetype  = string
+    model  = string
     keypair       = string
     subnet        = string
     securitygroup = string

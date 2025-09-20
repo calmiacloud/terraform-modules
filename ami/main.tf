@@ -150,7 +150,7 @@ resource "aws_imagebuilder_component" "component_runplaybookreboot" {
 resource "aws_imagebuilder_image_recipe" "recipe_main" {
   name = "Recipe${var.name}"
   version      = "1.0.0"
-  parent_image = var.Instance.ParentImage
+  parent_image = var.instance.ParentImage
   component { component_arn = aws_imagebuilder_component.component_basicpackages.arn }
   #component { component_arn = "arn:aws:imagebuilder:eu-south-2:aws:component/aws-cli-version-2-linux/1.0.4/1" }
   component { component_arn = aws_imagebuilder_component.component_installansible.arn }
@@ -185,10 +185,10 @@ resource "aws_imagebuilder_image_recipe" "recipe_main" {
 resource "aws_imagebuilder_infrastructure_configuration" "infra_main" {
   name = "Infrastructure${var.name}"
   instance_profile_name = aws_iam_instance_profile.instanceprofile_main.name
-  instance_types       = [var.Instance.InstanceType]
-  subnet_id            = var.Instance.Subnet
-  security_group_ids   = [var.Instance.SecurityGroup]
-  key_pair             = var.Instance.KeyPair
+  instance_types       = [var.instance.model]
+  subnet_id            = var.instance.subnet
+  security_group_ids   = [var.instance.securitygroup]
+  key_pair             = var.instance.keypair
 }
 
 ##############################
