@@ -5,7 +5,7 @@
 # Se usará el provider aws.web con default_tags automáticas
 resource "aws_dynamodb_table" "my_table" {
   provider     = aws.web
-  name         = "${var.tags.project}-${var.tags.environment}-table"
+  name         = "core-prod-ddb-hola"
   hash_key     = "id"
   billing_mode = "PAY_PER_REQUEST"
 
