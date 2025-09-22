@@ -1,12 +1,18 @@
-# Dummy Terraform module for AMI
-resource "null_resource" "dummy_ami_module" {
-	# Dummy trigger to simulate AMI creation
-	triggers = {
-		dummy = "ami_dummy"
-	}
-}
+#################################
+# DynamoDB Table Definition
+#################################
 
-output "dummy_ami_id" {
-	value       = "ami-0123456789abcdef0"
-	description = "Dummy AMI ID output"
+# Se usará el provider aws.web con default_tags automáticas
+resource "aws_dynamodb_table" "my_table" {
+  provider     = aws.web
+  name         = "${var.tags.project}-${var.tags.environment}-table"
+  hash_key     = "id"
+  billing_mode = "PAY_PER_REQUEST"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+
+  # No es necesario definir tags explícitamente: default_tags del provider se aplican automáticamente
 }

@@ -1,14 +1,3 @@
-variable "project" {
-  type = object({
-    name        = string
-    environment = string
-  })
-}
-
-variable "service" {
-  type = string
-}
-
 variable "playbooks_dir" {
   type = string
 }
